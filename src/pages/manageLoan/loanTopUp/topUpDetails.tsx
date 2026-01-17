@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
   Card,
@@ -15,22 +14,16 @@ import {
 import { Form, FormikProvider, useFormik } from "formik";
 import dayjs from "dayjs";
 import "dayjs/locale/en";
-import { apiClear, apiRequest } from "../../../store/actions";
-import API_ENDPOINTS from "../../../services/endpoints";
 import { useValidation } from "../../../validations/useValidation";
 import { ValidationField } from "../../../validations/schemaBuilder";
-import {
-  INTEREST_LIST,
-  LoanAccount_UPDATE_RES,
-} from "../../../store/actionTypes";
 import SubTable from "../../../components/subTable/subTable";
 import { OctagonAlert } from "lucide-react";
 import { Toast } from "../../../components/toast/toast";
 import { spliceDecimals } from "../../../const";
 import { LoadingButton } from "@mui/lab";
-import { useNavigate } from "react-router-dom";
+import { useInterest } from "../../master/interestCreation/interestHook";
+import { useLoanTopUpHook } from "./loanTopupHook";
 
-// Configure dayjs
 dayjs.locale("en");
 const dateFormat = "DD/MM/YYYY";
 
@@ -40,57 +33,36 @@ export default function LoanTopUpDetails({
   tableData,
   totalAmount,
 }: any) {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-
-  const [interestType, setInterestType] = useState([]);
   const [interestAmount, setInterestAmount] = useState<number>(0);
   const [minInterestRate, setMinInterestRate] = useState<any>();
   const [maxInterestRate, setMaxInterestRate] = useState<any>();
   const [maxAllowedAmount, setMaxAllowedAmount] = useState<any>();
   const [minAllowedAmount, setMinAllowedAmount] = useState<any>();
   const [selectedInterest, setSelectedInterest] = useState<any>();
-  const [loading, setLoading] = useState<boolean>(false);
+  const { interests, fetchInterests } = useInterest();
+  const { createTopup, loading } = useLoanTopUpHook();
 
   useEffect(() => {
-    dispatch(apiClear(INTEREST_LIST));
-    dispatch(apiClear(LoanAccount_UPDATE_RES));
     setMinInterestRate(0);
     setInterestAmount(0);
     setMaxInterestRate(0);
     setMaxAllowedAmount(0);
     setMinAllowedAmount(0);
     setSelectedInterest(0);
-    setLoading(false);
-    setInterestType([]);
 
     return () => {
-      dispatch(apiClear(INTEREST_LIST));
-      dispatch(apiClear(LoanAccount_UPDATE_RES));
       setMinInterestRate(0);
       setInterestAmount(0);
       setMaxInterestRate(0);
       setMaxAllowedAmount(0);
       setMinAllowedAmount(0);
       setSelectedInterest(0);
-      setLoading(false);
-      setInterestType([]);
     };
-  }, [dispatch]);
-
-  useEffect(() => {
-    dispatch(
-      apiRequest(INTEREST_LIST, "post", API_ENDPOINTS.SP.POST, {
-        procedureName: "findAll",
-        params: { tableName: "Interest" },
-      })
-    );
   }, []);
 
-  const { interest, loanTopUp } = useSelector((states: any) => ({
-    interest: states[INTEREST_LIST]?.data,
-    loanTopUp: states[LoanAccount_UPDATE_RES]?.data,
-  }));
+  useEffect(() => {
+    fetchInterests();
+  }, []);
 
   const fields: ValidationField[] = [
     {
@@ -225,32 +197,11 @@ export default function LoanTopUpDetails({
   });
 
   useEffect(() => {
-    if (accountData) {
-      setSelectedInterest(accountData.interestId);
-      const amount =
-        formik.values?.principalAmt * (formik.values.interestRate / 100);
-      setInterestAmount(spliceDecimals(amount, 2));
-    }
-    if (interest?.success) {
-      setInterestType(interest.data.data);
-    }
-  }, [interest, accountData]);
-
-  useEffect(() => {
-    if (loanTopUp) {
-      setLoading(false);
-      if (loanTopUp?.success) {
-        formik.resetForm();
-        Toast.show({
-          message: "Account Top Up Successfuly",
-          type: "success",
-        });
-        navigate("/manageloan/topup-history");
-        return;
-      }
-      return Toast.show({ message: "Failed to Topup ", type: "error" });
-    }
-  }, [loanTopUp]);
+    setSelectedInterest(accountData.interestId);
+    const amount =
+      formik.values?.principalAmt * (formik.values.interestRate / 100);
+    setInterestAmount(spliceDecimals(amount, 2));
+  }, [accountData]);
 
   useEffect(() => {
     if (totalAmount && selectedInterest) {
@@ -296,23 +247,14 @@ export default function LoanTopUpDetails({
       Toast.show({ message: "" + formik.errors.interestRate, type: "error" });
       return;
     }
-    setLoading(true);
-    dispatch(
-      apiRequest(LoanAccount_UPDATE_RES, "post", API_ENDPOINTS.SP.POST, {
-        procedureName: "CreateloanTopUp",
-        params: {
-          tableName: "loanAccount",
-          id: accountData._id,
-          updateFields: {
-            principalAmt: formik.values.principalAmt,
-            processingFee:
-              accountData.processingFee + formik.values.processingFee,
-            interestRate: formik.values.interestRate,
-            interestAmount:interestAmount,
-          },
-        },
-      })
-    );
+    const updateFields = {
+      principalAmt: formik.values.principalAmt,
+      processingFee: accountData.processingFee + formik.values.processingFee,
+      interestRate: formik.values.interestRate,
+      interestAmount: interestAmount,
+      interestId: formik.values.interestId,
+    };
+    createTopup({ loanAccountId: accountData._id, updateFields });
   };
 
   return (
@@ -347,12 +289,12 @@ export default function LoanTopUpDetails({
 
                           <Autocomplete
                             size="medium"
-                            options={interestType?.map((option: any) => ({
+                            options={interests?.map((option: any) => ({
                               label: option.interestName,
                               value: option._id,
                             }))}
                             value={
-                              interestType
+                              interests
                                 ?.map((option: any) => ({
                                   label: option.interestName,
                                   value: option._id,
@@ -381,7 +323,7 @@ export default function LoanTopUpDetails({
                             onChange={(_, value: any) => {
                               const interestId = value?.value || "";
                               formik.setFieldValue("interestId", interestId);
-                              const findInterest: any = interestType.find(
+                              const findInterest: any = interests.find(
                                 (p: any) => p._id == value.value
                               );
                               setSelectedInterest(findInterest);
@@ -602,8 +544,13 @@ export default function LoanTopUpDetails({
           </Grid>
         </Box>
 
-        <Box px={3}>
-          <SubTable coloums={coloums} data={columnsData} action={false} />
+        <Box px={3} py={2}>
+          <SubTable
+            coloums={coloums}
+            data={columnsData}
+            action={false}
+            hidePagination={true}
+          />
         </Box>
       </Card>
 

@@ -221,7 +221,7 @@ function LoanClosure() {
           handleCustomerId={handleCustomerId}
           handleBranchId={handleBranchId}
           handleLoanId={handleLoanId}
-          loanType={"paymentCompleted"}
+          loanType={2}
         />
 
         {loanId && (
