@@ -1,0 +1,29 @@
+/* Form title */
+.form-title {
+    font-family: "Urbanist", sans-serif;
+    font-weight: 700 !important;
+    font-size: 18px  !important;
+    line-height: 100%  !important;
+    letter-spacing: 3%;
+    /* text-transform: capitalize;  */
+    color: #09090f !important;
+    /* top: 16px;
+    right: 16px; */
+ 
+  }
+  
+  .form-label {
+    font-family: "Urbanist", sans-serif;
+    font-weight: 600 !important;
+    font-size: 14px  !important;
+    line-height: 16px  !important;
+    margin-bottom: 4px !important;
+    color: #09090f !important;
+  }
+  
+  .required-asterisk {
+    color: red;
+    margin-left: 4px;
+    font-size: 14px;
+    font-weight: bold;
+  }

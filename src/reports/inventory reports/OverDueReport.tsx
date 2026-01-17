@@ -1,0 +1,39 @@
+
+
+import { Helmet } from 'react-helmet-async';
+import { CONFIG } from '../../config-global';
+import { DataTable } from '../../components/datatable/datatableComp';
+import API_ENDPOINTS from '../../services/endpoints';
+import { OVERDUE_REPORTS } from '../../store/actionTypes';
+import { DashboardContent } from '../../layouts/dashboard';
+import { Box, Typography} from '@mui/material';
+
+
+export default function OverDueReport() {
+  return (
+    <>
+      <Helmet>
+                     <title>{`Users - ${CONFIG.appName}`}</title>
+                 </Helmet>
+             
+                 <DashboardContent>
+                     <Box display="flex" alignItems="center" mb={5}>
+                     <Typography variant="h6" flexGrow={1} marginLeft={2}>
+                         <span className='text-[#737791]'>Inventory</span> / OverDue Report
+                         </Typography>
+                     </Box>
+             
+                     <DataTable
+                         actionType={OVERDUE_REPORTS}
+                         procedureName="overDueReport"
+                         endpoint={API_ENDPOINTS.SP.POST}
+                         table_type= "reports-overDue"
+                         tableName="loanAccount"
+                         exportOptions = {true}
+
+
+                     />
+                 </DashboardContent>
+    </>
+  )
+}
