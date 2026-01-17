@@ -18,7 +18,7 @@ export const navData = [
   {
     title: "Masters",
     path: "/masters",
-    icon:"masters",
+    icon: "masters",
     children: [
       {
         title: "Metal",
@@ -107,11 +107,11 @@ export const navData = [
         path: "/income/createincome",
         icon: icon("ic-list"),
       },
-      // {
-      //   title: "Sub Income ", 
-      //   path: "/income/subincome",
-      //   icon: icon("ic-plus"),
-      // },
+      {
+        title: "Sub Income ",
+        path: "/income/subincome",
+        icon: icon("ic-plus"),
+      },
       // {
       //   title: "Income Entries",
       //   path: "/income/income-entries",
@@ -144,7 +144,7 @@ export const navData = [
   {
     title: "Manage Loan",
     path: "/manageloan",
-    icon:"manageLoan",
+    icon: "manageLoan",
     children: [
       {
         title: " New Loans",
@@ -193,8 +193,8 @@ export const navData = [
         path: "/customer/existingcustomer",
         icon: icon("ic-plus"),
       },
-  
-     
+
+
     ],
   },
   {
@@ -306,7 +306,7 @@ export const navData = [
         path: "/reports/payment-report",
         icon: icon("ic-list"),
       },
-    
+
     ]
   },
   // {
@@ -354,13 +354,13 @@ export const navData = [
   //       path: "/inventoryreports/loanhistory",
   //       icon: icon("ic-plus"),
   //     },
-   
+
   //     {
   //       title: "Item History",
   //       path: "/inventoryreports/itemhistory",
   //       icon: icon("ic-plus"),
   //     },
-      
+
   //   ],
   // },
   // {
@@ -408,7 +408,7 @@ export const navData = [
   //       path: "/accountreports/expensesincome",
   //       icon: icon("ic-plus"),
   //     },
-     
+
   //   ],
   // },
   {

@@ -47,6 +47,7 @@ const SubExpense = lazy(() => import('../pages/expense/subExpense/subExpenseTabl
 
 // income
 const IncomeTable = lazy(() => import('../pages/income/createIncome/createIncomeTable'))
+const SubIncomeTable = lazy(() => import('../pages/income/subIncome/subIncomeTable'))
 
 const BlogPage = lazy(() => import('../pages/blog'));
 const UserPage = lazy(() => import('../pages/user'));
@@ -253,6 +254,7 @@ export function Router() {
 
         // income
         { path: '/income/createincome', element: <IncomeTable /> },
+        { path: '/income/subincome', element: <SubIncomeTable /> },
 
 
         // loan

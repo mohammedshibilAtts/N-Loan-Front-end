@@ -12,8 +12,6 @@ export function useIncome() {
         try {
             setLoading(true);
             const res = await incomeApi.getAll();
-            console.log(res);
-            
             setIncomes(res.data || []);
         } catch (err: any) {
             Toast.show({
