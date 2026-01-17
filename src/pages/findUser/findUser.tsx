@@ -16,11 +16,10 @@ import "react-toastify/dist/ReactToastify.css";
 import { Form, FormikProvider, useFormik } from "formik";
 import dayjs from "dayjs";
 import "dayjs/locale/en";
-import { apiClear, apiRequest } from "../../store/actions";
+import {  apiRequest } from "../../store/actions";
 import API_ENDPOINTS from "../../services/endpoints";
 import {
   BRANCH_LIST,
-  CUSTOMER_LIST,
   LoanAccount_LIST,
 } from "../../store/actionTypes";
 import { useValidation } from "../../validations/useValidation";
@@ -30,6 +29,9 @@ import { Toast } from "../../components/toast/toast";
 import Page from "../../components/Page";
 import "react-toastify/dist/ReactToastify.css";
 import { mobileLength } from "../../const";
+import { useBranch } from "../settings/branch/branchHooks";
+import { useCustomer } from "../customer overview/customerHooks";
+import { useLoanAccount } from "../manageLoan/customer/loanAccountHooks";
 
 // Configure dayjs
 dayjs.locale("en");
@@ -40,28 +42,21 @@ export default function FindUser({
   handleCustomerId,
   handleBranch,
   handleLoanId,
-  loanType = "findAll"
+  loanType = 0,
 }: any) {
   const dispatch = useDispatch();
   // const isEdit = pathname.includes('edit');
-  const designLibraryData = (null);
+  const designLibraryData = null;
   // const [isLoading, setIsLoading] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-  const [branchData, setBranchData] = useState<
-    { branchName: string; _id: string }[]
-  >([]);
-  const [loanData, setLoanData] = useState([]);
+  const [loanData, setLoanData] = useState<any[]>([]);
+
+  const { branches, fetchBranches } = useBranch();
+  const { fetchCustomerBysearch } = useCustomer();
+  const {findAccByCustomers,loading,loans} = useLoanAccount()
 
   useEffect(() => {
-    dispatch(apiClear(BRANCH_LIST));
-    dispatch(apiClear(CUSTOMER_LIST));
-    dispatch(apiClear(LoanAccount_LIST));
-    return () => {
-      dispatch(apiClear(BRANCH_LIST));
-      dispatch(apiClear(CUSTOMER_LIST));
-      dispatch(apiClear(LoanAccount_LIST));
-    };
-  }, [dispatch]);
+    fetchBranches();
+  }, []);
 
   const fields: ValidationField[] = [
     {
@@ -89,17 +84,9 @@ export default function FindUser({
     },
   ];
 
-  const { branchList, customerFind, loanList } = useSelector((states: any) => ({
-    branchList: states[BRANCH_LIST]?.data,
-    customerFind: states[CUSTOMER_LIST]?.data,
+  const { loanList } = useSelector((states: any) => ({
     loanList: states[LoanAccount_LIST]?.data,
   }));
-
-  useEffect(() => {
-    if (branchList?.success) {
-      setBranchData(branchList.data.data);
-    }
-  }, [branchList]);
 
   useEffect(() => {
     dispatch(
@@ -131,12 +118,12 @@ export default function FindUser({
   const formik = useFormik({
     initialValues: getInitialValues(),
     validationSchema: useValidation(fields),
-    onSubmit: async () => { },
+    onSubmit: async () => {},
     enableReinitialize: true,
   });
 
-
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    setLoanData([]);
     if (!formik.values.branchId) {
       Toast.show({ message: "Branch is required", type: "error" });
       return;
@@ -149,55 +136,28 @@ export default function FindUser({
       });
       return;
     }
-    setIsSearching(true);
-    dispatch(
-      apiRequest(CUSTOMER_LIST, "post", API_ENDPOINTS.SP.POST, {
-        procedureName: "findAll",
-        params: {
-          tableName: "customer",
-          filters: {
-            branchId: formik.values.branchId,
-            mobile: formik.values.mobile,
-          },
-        },
-      })
-    );
+
+    const findCustomer = await fetchCustomerBysearch({
+      branchId: formik.values.branchId,
+      mobile: formik.values.mobile,
+    });
+    if(findCustomer){
+      handleCustomerId(findCustomer);
+      findAccByCustomers({mobile:formik.values.mobile,status:loanType})
+    }else{
+       handleCustomerId("");
+    }
     setLoanData([]);
   };
 
-  useEffect(() => {
-    if (customerFind?.success && isSearching) {
-      setIsSearching(false);
-      if (customerFind.data.data.length >= 1) {
-        Toast.show({ message: "Customer Found Successfuly", type: "success" });
-        handleCustomerId(customerFind.data.data[0]);
-        dispatch(
-          apiRequest(LoanAccount_LIST, "post", API_ENDPOINTS.SP.POST, {
-            procedureName: loanType,
-            params: {
-              tableName: "loanAccount",
-              filters: {
-                loanStatus: 0,
-                branchId: formik.values.branchId,
-                customerId: customerFind.data.data[0]._id,
-              },
-            },
-          })
-        );
-      } else {
-        handleCustomerId("");
-        Toast.show({ message: "Customer not found", type: "error" });
-      }
-    }
-  }, [customerFind, isSearching]);
 
   useEffect(() => {
-    if (loanList?.success) {
-      setLoanData(loanList.data.data);
+    if (loans) {
+      setLoanData(loans);
     } else {
       console.log(loanList);
     }
-  }, [loanList]);
+  }, [loans]);
 
   return (
     <>
@@ -225,15 +185,18 @@ export default function FindUser({
                       Branch
                     </InputLabel>
                     <Autocomplete
-                      options={branchData?.map((branch) => ({
-                        label: branch.branchName,
-                        value: branch._id,
-                      })) ?? []}
-                      value={
-                        branchData?.map((branch) => ({
+                      options={
+                        branches?.map((branch) => ({
                           label: branch.branchName,
                           value: branch._id,
-                        }))
+                        })) ?? []
+                      }
+                      value={
+                        branches
+                          ?.map((branch) => ({
+                            label: branch.branchName,
+                            value: branch._id,
+                          }))
                           .find(
                             (option) => option.value === formik.values.branchId
                           ) || null
@@ -363,15 +326,19 @@ export default function FindUser({
                     </InputLabel>
 
                     <Autocomplete
-                      options={loanData?.map((item: any) => ({
-                        label: `${item.loanNo} (${item.principalAmt})`, // show both loanNo + principalAmt
-                        value: item._id,
-                      })) ?? []}
-                      value={
+                      loading={loading}          
+                      options={
                         loanData?.map((item: any) => ({
-                          label: `${item.loanNo} (${item.principalAmt})`, // again use same mapping
+                          label: `${item.loanNo} (${item.principalAmt})`, // show both loanNo + principalAmt
                           value: item._id,
-                        }))
+                        })) ?? []
+                      }
+                      value={
+                        loanData
+                          ?.map((item: any) => ({
+                            label: `${item.loanNo} (${item.principalAmt})`, // again use same mapping
+                            value: item._id,
+                          }))
                           .find(
                             (option) => option.value === formik.values.loanId
                           ) || null
@@ -391,11 +358,11 @@ export default function FindUser({
                             Boolean(formik.errors.loanId)
                           }
                           helperText={
-                            formik.touched.loanId && typeof formik.errors.loanId === "string"
+                            formik.touched.loanId &&
+                            typeof formik.errors.loanId === "string"
                               ? formik.errors.loanId
                               : ""
                           }
-
                           sx={{
                             "& .MuiInputBase-root": {
                               height: "48px",

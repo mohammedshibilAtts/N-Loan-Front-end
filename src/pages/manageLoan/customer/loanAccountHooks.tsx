@@ -67,6 +67,24 @@ export function useLoanAccount() {
     }
   };
 
+  const findAccByCustomers = async (data: {
+    mobile: string;
+    status: number;
+  }) => {
+    try {
+      const { mobile, status } = data;
+      setLoading(true);
+      const res = await loanAccountApi.findAccByCustomers({ mobile, status });
+      setLoans(res.data || []);
+    } catch (err: any) {
+      Toast.show({
+        message: err?.message || "Failed to fetch loans",
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   /* ---------- EXPORT ---------- */
   return {
@@ -79,6 +97,6 @@ export function useLoanAccount() {
     fetchLoans,
     fetchLoanById,
     createLoanAccount,
-    
+    findAccByCustomers,
   };
 }
