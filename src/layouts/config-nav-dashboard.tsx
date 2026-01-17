@@ -98,6 +98,28 @@ export const navData = [
     ]
   },
   {
+    title: "Income",
+    path: "/income",
+    icon: "expense",
+    children: [
+      {
+        title: "Income Creation",
+        path: "/income/createincome",
+        icon: icon("ic-list"),
+      },
+      // {
+      //   title: "Sub Income ", 
+      //   path: "/income/subincome",
+      //   icon: icon("ic-plus"),
+      // },
+      // {
+      //   title: "Income Entries",
+      //   path: "/income/income-entries",
+      //   icon: icon("ic-plus"),
+      // },
+    ],
+  },
+  {
     title: "Expense",
     path: "/expense",
     icon: "expense",
