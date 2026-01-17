@@ -112,11 +112,11 @@ export const navData = [
         path: "/income/subincome",
         icon: icon("ic-plus"),
       },
-      // {
-      //   title: "Income Entries",
-      //   path: "/income/income-entries",
-      //   icon: icon("ic-plus"),
-      // },
+      {
+        title: "Income Entries",
+        path: "/income/incomeEntries",
+        icon: icon("ic-plus"),
+      },
     ],
   },
   {
