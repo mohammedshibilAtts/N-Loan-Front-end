@@ -130,7 +130,7 @@ const MenuCreation = lazy(() => import('../pages/settings/menu/menuCreation'))
 const SubMenuCreation = lazy(() => import('../pages/settings/submenu/submenu'))
 const PaymentModeReport = lazy(() => import('../newReports/paymentMode/paymentModeReport'))
 const StockLedgerReport = lazy(() => import('../newReports/stockLedgerReport'))
-const PaymentReport = lazy(() => import('../newReports/paymentReport'))
+const PaymentReport = lazy(() => import('../newReports/payment/paymentReport'))
 
 
 
