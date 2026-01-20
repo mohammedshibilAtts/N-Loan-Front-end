@@ -17,7 +17,7 @@ import ChargesPayment from '../pages/payment/chargesPayment/chargesPayment';
 import PrincipalPayment from '../pages/payment/principalAmtPayment/principalPayment';
 import PreClosePayment from '../pages/payment/preClosePayment/preClosePayment';
 import IncomeExpensesReport from '../newReports/incomeExpenses/incomeExpensesReport';
-import CashFlowReport from '../newReports/cashFlowReport';
+import CashFlowReport from '../newReports/cashFlow/cashFlowReport';
 import LoanClosureHistory from '../pages/manageLoan/loan_closure/loanClosureHistory';
 import ViewLoanClosure from '../pages/manageLoan/loan_closure/viewLoanClosure';
 
