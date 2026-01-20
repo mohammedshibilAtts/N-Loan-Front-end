@@ -12,26 +12,17 @@ import {
 import "react-toastify/dist/ReactToastify.css";
 import dayjs from "dayjs";
 import "dayjs/locale/en";
-import "react-toastify/dist/ReactToastify.css";
 import { useFormik } from "formik";
 import { Button } from "@mui/material";
 import { useValidation } from "../../../validations/useValidation";
 import { ValidationField } from "../../../validations/schemaBuilder";
 import { useEffect, useState } from "react";
-import { apiClear, apiRequest } from "../../../store/actions";
-import API_ENDPOINTS from "../../../services/endpoints";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  LIST_PAYMENTBASIS,
-  LIST_RELATIONSHIP,
-  PAYMENT_AMOUNT,
-  PAYMENT_CREATE_RES,
-} from "../../../store/actionTypes";
 import PaymentModal from "./paymentModeModal";
 import SubTable from "../../../components/subTable/subTable";
 import { Toast } from "../../../components/toast/toast";
 import { useNavigate } from "react-router-dom";
 import { spliceDecimals } from "../../../const";
+import { useInterestPayment } from "./interestPaymentHooks";
 
 // Configure dayjs
 dayjs.locale("en");
@@ -44,39 +35,35 @@ interface PaymentEntry {
 
 export default function Payment({
   accountData,
-  // data,
   customerId,
   loanId,
   itemData,
   defaultPaymentBasis
 }: any) {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [relationShip, setRelationShip] = useState<any>([]);
-  const [paymentBasisData, setPaymentBasisData] = useState<any>([]);
+  const {
+    loading,
+    relationships,
+    paymentBasisList,
+    dueData,
+    fetchRelationships,
+    fetchPaymentBasis,
+    fetchDue,
+    createPayment,
+    setDueData,
+  } = useInterestPayment();
+
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [paymentEntries, setPaymentEntries] = useState<PaymentEntry[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [paymentData, setPaymentData] = useState<{
-    isDue: number;
-    amount: number;
-    fineAmount?: number;
-  }>({ isDue: 0, amount: 0 });
 
   useEffect(() => {
-    dispatch(apiClear(PAYMENT_CREATE_RES));
-    dispatch(apiClear(PAYMENT_AMOUNT));
-    setPaymentData({ isDue: 0, amount: 0 });
-    setPaymentEntries([]);
-
+    fetchRelationships();
+    fetchPaymentBasis();
     return () => {
-      dispatch(apiClear(PAYMENT_CREATE_RES));
-      dispatch(apiClear(PAYMENT_AMOUNT));
-      setPaymentData({ isDue: 0, amount: 0 });
+      setDueData({ isDue: 0, amount: 0 });
       setPaymentEntries([]);
-      formik.resetForm();
-    };
-  }, [dispatch]);
+    }
+  }, []);
 
   const Loanfields = [
     {
@@ -95,22 +82,22 @@ export default function Payment({
       label: "Total Amount Payable",
       value:
         spliceDecimals(
-          (accountData?.principalAmt +
-            accountData?.interestAmount * accountData?.installment +
-            accountData?.processingFee +
-            accountData?.additionalCharges)
+          (Number(accountData?.principalAmt || 0) +
+            Number(accountData?.interestAmount || 0) * Number(accountData?.installment || 0) +
+            Number(accountData?.processingFee || 0) +
+            Number(accountData?.additionalCharges || 0))
         ) || "N/A",
     },
     {
       label: "Charges",
       value:
         spliceDecimals(
-          (accountData?.processingFee + accountData?.additionalCharges)
+          (Number(accountData?.processingFee || 0) + Number(accountData?.additionalCharges || 0))
         ) || "N/A",
     },
     {
       label: "payable amount",
-      value: spliceDecimals(paymentData?.amount) || "N/A",
+      value: spliceDecimals(dueData?.amount) || "N/A",
     },
   ];
 
@@ -141,7 +128,7 @@ export default function Payment({
       type: "text",
     },
     {
-      name: "phone",
+      name: "phoneNumber", // Fixed name to match schema
       label: "Phone Number",
       type: "number",
     },
@@ -178,44 +165,35 @@ export default function Payment({
     initialValues: initialValues,
     validationSchema: useValidation(fields),
     onSubmit: async (values) => {
-      try {
-        if (formik.values.amount <= 0) {
-          Toast.show({ message: "Minimum payment is 1 ", type: "success" });
+      if (Number(formik.values.amount) <= 0) {
+        Toast.show({ message: "Minimum payment is 1 ", type: "success" });
+        return;
+      }
+      if (Number(formik.values.paymentBasis) === 5) {
+        if (Number(formik.values.amount) !== Number(dueData.amount)) {
+          Toast.show({
+            message:
+              "The partial amount could not be processed during the pre-closure.",
+            type: "error",
+          });
           return;
         }
-        if (formik.values.paymentBasis == 5) {
-          if (formik.values.amount !== paymentData.amount) {
-            Toast.show({
-              message:
-                "The partial amount could not be processed during the pre-closure.",
-              type: "error",
-            });
-            return;
-          }
-        }
-        const data: any = {
-          ...values,
-          totalPaybleAmount: paymentData.amount,
-          loanAccountId: loanId,
-          customerId,
-          modes: paymentEntries,
-        };
-        if (paymentData?.fineAmount) {
-          data.fineAmount = paymentData?.fineAmount;
-        }
-        setIsLoading(true);
-        dispatch(
-          apiRequest(PAYMENT_CREATE_RES, "post", API_ENDPOINTS.SP.POST, {
-            procedureName: "create",
-            params: {
-              tableName: "Payment",
-              data: data,
-            },
-          })
-        );
-      } catch (err) {
-        setIsLoading(false);
-        console.log(err);
+      }
+
+      const data: any = {
+        ...values,
+        totalPaybleAmount: dueData.amount,
+        loanAccountId: loanId,
+        customerId,
+        modes: paymentEntries,
+      };
+      if (dueData?.fineAmount) {
+        data.fineAmount = dueData?.fineAmount;
+      }
+
+      const success = await createPayment(data);
+      if (success) {
+        navigate("/payment/managepayment");
       }
     },
     enableReinitialize: true,
@@ -226,81 +204,19 @@ export default function Payment({
       (acc: number, curr: any) => acc + Number(curr.amount),
       0
     );
-    +formik.setFieldValue("totalAmount", spliceDecimals(totalEnteredAmount));
+    formik.setFieldValue("totalAmount", spliceDecimals(totalEnteredAmount));
     formik.setFieldValue(
       "amount",
-      spliceDecimals(Number(totalEnteredAmount) + Number(formik.values.discount))
+      spliceDecimals(Number(totalEnteredAmount) + Number(formik.values.discount || 0))
     );
   }, [paymentEntries, formik.values.discount]);
 
-  // useEffect(() => {
-  //   setPaymentEntries([]);
-  // }, [formik.values.discount]);
 
   useEffect(() => {
-    dispatch(
-      apiRequest(LIST_RELATIONSHIP, "post", API_ENDPOINTS.SP.POST, {
-        procedureName: "findAll",
-        params: {
-          tableName: "relationShip",
-        },
-      })
-    );
-    dispatch(
-      apiRequest(LIST_PAYMENTBASIS, "post", API_ENDPOINTS.SP.POST, {
-        procedureName: "findAll",
-        params: {
-          tableName: "paymentBasis",
-        },
-      })
-    );
-  }, []);
-
-  useEffect(() => {
-    if (formik.values.paymentBasis) {
-      dispatch(
-        apiRequest(PAYMENT_AMOUNT, "post", API_ENDPOINTS.SP.POST, {
-          procedureName: "findAmount",
-          params: {
-            tableName: "payment",
-            filters: {
-              paymentBasis: formik.values.paymentBasis,
-              loanAccountId: loanId,
-            },
-          },
-        })
-      );
+    if (formik.values.paymentBasis && loanId) {
+      fetchDue(loanId, formik.values.paymentBasis); // Using loanId as loanAccountId
     }
   }, [formik.values.paymentBasis, loanId]);
-
-  const { relationList, paymentBasis, paymentAmount, createPaymentRes } =
-    useSelector((states: any) => ({
-      relationList: states[LIST_RELATIONSHIP]?.data,
-      paymentBasis: states[LIST_PAYMENTBASIS]?.data,
-      paymentAmount: states[PAYMENT_AMOUNT]?.data,
-      createPaymentRes: states[PAYMENT_CREATE_RES]?.data,
-    }));
-
-  useEffect(() => {
-    if (relationList?.success) {
-      setRelationShip(relationList.data.data);
-    }
-    if (paymentBasis?.success) {
-      setPaymentBasisData(paymentBasis.data.data);
-    }
-    if (paymentAmount?.success) {
-      setPaymentData(paymentAmount.data);
-    }
-    if (createPaymentRes?.success) {
-      setIsLoading(false);
-      Toast.show({
-        message: "Payment successfully completed",
-        type: "success",
-      });
-      navigate("/payment/managepayment");
-    }
-  }, [relationList, paymentBasis, paymentAmount, createPaymentRes]);
-
 
 
   const handleModal = () => {
@@ -317,14 +233,14 @@ export default function Payment({
     { id: "Quantity", label: "Quantity" },
   ];
 
-  const columnsData = itemData?.map((item: any, index: any) => ({
+  const columnsData = (Array.isArray(itemData) ? itemData : [])?.map((item: any, index: any) => ({
     id: index + 1, // S.NO
-    metal: item.metalId.metalName,
-    Purity: item.purityId.purityName,
-    "Item Type": item.itemId?.itemName,
-    "Gross wt": item.grossWt,
-    "Net wt": item.netWt,
-    Quantity: item.quantity,
+    metal: item?.metalId?.metalName || "N/A",
+    Purity: item?.purityId?.purityName || "N/A",
+    "Item Type": item?.itemId?.itemName || "N/A",
+    "Gross wt": item?.grossWt || "N/A",
+    "Net wt": item?.netWt || "N/A",
+    Quantity: item?.quantity || "N/A",
   }));
 
   return (
@@ -336,8 +252,8 @@ export default function Payment({
           entries={paymentEntries}
           setEntries={setPaymentEntries}
           paymentData={
-            paymentData.amount -
-            parseFloat(Number(formik.values.discount).toFixed(2))
+            Number(dueData.amount) -
+            parseFloat(Number(formik.values.discount || 0).toFixed(2))
           }
         />
       )}
@@ -413,6 +329,8 @@ export default function Payment({
                         }
                         helperText={
                           formik.touched.discount && formik.errors.discount
+                            ? (formik.errors.discount as string)
+                            : ""
                         }
                       />
                     </Box>
@@ -463,11 +381,11 @@ export default function Payment({
                           Payment Basis<span className="text-red-500">*</span>
                         </Typography>
                         <Autocomplete
-                          options={paymentBasisData}
+                          options={paymentBasisList}
                           readOnly={!!defaultPaymentBasis}
                           getOptionLabel={(option) => option.mode || ""}
                           value={
-                            paymentBasisData.find(
+                            paymentBasisList.find(
                               (item: any) =>
                                 String(item.no) === String(formik.values.paymentBasis)
                             ) || null
@@ -556,7 +474,7 @@ export default function Payment({
                               <InputAdornment position="end">
                                 <Button
                                   onClick={handleModal}
-                                  disabled={paymentData.amount < 0.01}
+                                  disabled={Number(dueData.amount) < 0.01}
                                   variant="contained"
                                   sx={{
                                     height: "48px",
@@ -632,7 +550,7 @@ export default function Payment({
                           }
                           helperText={
                             formik.touched.phoneNumber &&
-                            formik.errors.phoneNumber
+                            (formik.errors.phoneNumber as string)
                           }
                         />
                       </Grid>
@@ -647,10 +565,10 @@ export default function Payment({
                         </Typography>
 
                         <Autocomplete
-                          options={relationShip}
+                          options={relationships}
                           getOptionLabel={(option) => option.relationName || ""}
                           value={
-                            relationShip.find(
+                            relationships.find(
                               (item: any) =>
                                 item._id === formik.values.relationshipId
                             ) || null
@@ -673,7 +591,7 @@ export default function Payment({
                               }
                               helperText={
                                 formik.touched.relationshipId &&
-                                formik.errors.relationshipId
+                                (formik.errors.relationshipId as string)
                               }
                               sx={{
                                 "& .MuiOutlinedInput-root": {
@@ -706,7 +624,7 @@ export default function Payment({
                       </Grid>
                     </Grid>
                   </form>
-                  {!paymentData.isDue ? (
+                  {!Number(dueData.isDue) ? (
                     <Alert sx={{ mt: 2 }} severity="error">
                       {"No payment pending"}
                     </Alert>
@@ -726,7 +644,7 @@ export default function Payment({
           display="flex"
           alignItems="center"
           justifyContent="end"
-          gap={2} // optional, for some breathing space
+          gap={2}
         >
           <Box display="flex" gap={1}>
             <Button
@@ -742,7 +660,7 @@ export default function Payment({
               Cancel
             </Button>
             <Button
-              onClick={formik.submitForm} // No e.preventDefault needed!
+              onClick={() => formik.submitForm()}
               variant="contained"
               sx={{
                 bgcolor: "black",
@@ -751,9 +669,9 @@ export default function Payment({
                   bgcolor: "#333",
                 },
               }}
-              disabled={!paymentData.isDue || formik.values.amount < 1}
+              disabled={!Number(dueData.isDue) || Number(formik.values.amount) < 1 || loading}
             >
-              {isLoading ? <CircularProgress size={24} sx={{ color: "white" }} /> : "Save"}
+              {loading ? <CircularProgress size={24} sx={{ color: "white" }} /> : "Save"}
             </Button>
 
             <Button
@@ -766,9 +684,9 @@ export default function Payment({
                   bgcolor: "#333",
                 },
               }}
-              disabled={!paymentData.isDue || formik.values.amount < 1}
+              disabled={!Number(dueData.isDue) || Number(formik.values.amount) < 1 || loading}
             >
-              {isLoading ? <CircularProgress size={24} sx={{ color: "white" }} /> : "Save & print"}
+              {loading ? <CircularProgress size={24} sx={{ color: "white" }} /> : "Save & print"}
             </Button>
           </Box>
         </Box>
