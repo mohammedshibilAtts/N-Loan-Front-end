@@ -1,9 +1,6 @@
 import { apiService } from "./apiService";
 
 export const reportsApi = {
-    incomeExpenseReport: (data: any) =>
-        apiService.post("/incomeExpenseReport", data),
-
     paymentModeReport: (data: any) => apiService.post("/paymentModeReport", data),
     exportPaymentModeReport: (data: any) =>
         apiService.postDownload("/exportPaymentModeReport", data),
