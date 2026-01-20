@@ -27,7 +27,7 @@ API.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       // Example actions:
       localStorage.removeItem("accessToken");
-      window.location.href = "/sign-in"; 
+      window.location.href = "/sign-in";
     }
 
     return Promise.reject(error.response?.data || error);
@@ -69,6 +69,12 @@ export const apiService = {
   },
   delete: async (url: string) => {
     const response = await API.delete(url);
+    return response.data;
+  },
+  postDownload: async (url: string, data = {}) => {
+    const response = await API.post(url, data, {
+      responseType: "blob",
+    });
     return response.data;
   },
 };
