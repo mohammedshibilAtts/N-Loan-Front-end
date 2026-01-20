@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
   Card,
@@ -12,16 +11,9 @@ import {
   Button,
 } from "@mui/material";
 import "react-toastify/dist/ReactToastify.css";
-// import { LoadingButton } from "@mui/lab";
 import { Form, FormikProvider, useFormik } from "formik";
 import dayjs from "dayjs";
 import "dayjs/locale/en";
-import {  apiRequest } from "../../store/actions";
-import API_ENDPOINTS from "../../services/endpoints";
-import {
-  BRANCH_LIST,
-  LoanAccount_LIST,
-} from "../../store/actionTypes";
 import { useValidation } from "../../validations/useValidation";
 import { ValidationField } from "../../validations/schemaBuilder";
 import { Toast } from "../../components/toast/toast";
@@ -44,15 +36,12 @@ export default function FindUser({
   handleLoanId,
   loanType = 0,
 }: any) {
-  const dispatch = useDispatch();
-  // const isEdit = pathname.includes('edit');
   const designLibraryData = null;
-  // const [isLoading, setIsLoading] = useState(false);
   const [loanData, setLoanData] = useState<any[]>([]);
 
   const { branches, fetchBranches } = useBranch();
   const { fetchCustomerBysearch } = useCustomer();
-  const {findAccByCustomers,loading,loans} = useLoanAccount()
+  const { findAccByCustomers, loans } = useLoanAccount()
 
   useEffect(() => {
     fetchBranches();
@@ -84,19 +73,6 @@ export default function FindUser({
     },
   ];
 
-  const { loanList } = useSelector((states: any) => ({
-    loanList: states[LoanAccount_LIST]?.data,
-  }));
-
-  useEffect(() => {
-    dispatch(
-      apiRequest(BRANCH_LIST, "post", API_ENDPOINTS.SP.POST, {
-        procedureName: "findAll",
-        params: { tableName: "branch" },
-      })
-    );
-  }, []);
-
   const getInitialValues = () => {
     return Object.fromEntries(
       fields?.map(({ name, value }: any) => {
@@ -118,7 +94,7 @@ export default function FindUser({
   const formik = useFormik({
     initialValues: getInitialValues(),
     validationSchema: useValidation(fields),
-    onSubmit: async () => {},
+    onSubmit: async () => { },
     enableReinitialize: true,
   });
 
@@ -141,11 +117,11 @@ export default function FindUser({
       branchId: formik.values.branchId,
       mobile: formik.values.mobile,
     });
-    if(findCustomer){
+    if (findCustomer) {
       handleCustomerId(findCustomer);
-      findAccByCustomers({mobile:formik.values.mobile,status:loanType})
-    }else{
-       handleCustomerId("");
+      findAccByCustomers({ mobile: formik.values.mobile, status: loanType })
+    } else {
+      handleCustomerId("");
     }
     setLoanData([]);
   };
@@ -154,8 +130,6 @@ export default function FindUser({
   useEffect(() => {
     if (loans) {
       setLoanData(loans);
-    } else {
-      console.log(loanList);
     }
   }, [loans]);
 
@@ -326,7 +300,7 @@ export default function FindUser({
                     </InputLabel>
 
                     <Autocomplete
-                      loading={loading}          
+                      // loading={loading} // Removed loading prop as it was coming from Redux or wasn't used correctly
                       options={
                         loanData?.map((item: any) => ({
                           label: `${item.loanNo} (${item.principalAmt})`, // show both loanNo + principalAmt
@@ -359,7 +333,7 @@ export default function FindUser({
                           }
                           helperText={
                             formik.touched.loanId &&
-                            typeof formik.errors.loanId === "string"
+                              typeof formik.errors.loanId === "string"
                               ? formik.errors.loanId
                               : ""
                           }
