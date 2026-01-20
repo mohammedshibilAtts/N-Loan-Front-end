@@ -30,7 +30,7 @@ function ViewLoanAccounts() {
   }, [id]);
 
     const loanData = selectedLoan?.loanData;
-    const itemData = selectedLoan?.items;
+    const itemData = selectedLoan?.items?.item;
 
   // ✅ HARD GUARD (PREVENTS CRASH)
   if (!loanData) {
@@ -176,15 +176,15 @@ function ViewLoanAccounts() {
     },
   ];
 
-    const tableData = itemData.map((item:any, index:number) => ({
+    const tableData = itemData?.map((item:any, index:number) => ({
     id: index + 1, // S.NO
     tagNo: item?.tagId, // S.NO
-    metal: item?.metalId?.metalName,
-    Purity: item?.purityId?.purityName,
-    "item": item?.itemId?.itemName,
+    metal: item?.metalName,
+    Purity: item?.purityName,
+    "item": item?.itemName,
     "Net wt": item?.netWt,
     "Gross wt": item?.grossWt,
-    LockerName: item?.lockerId?.lockerName,
+    LockerName: item?.lockerName,
   }));
 
     const coloums = [

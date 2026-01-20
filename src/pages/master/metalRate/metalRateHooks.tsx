@@ -42,10 +42,10 @@ export function useMetalRate() {
     }
   };
   
-  const getRateByPurity = async (branchId:string,purityId:string) => {
+  const getRateByPurity = async (branchId:string,metalId:string,puirtyNo:Number) => {
     try {
       setLoading(true);
-      const res = await metalRateApi.getRateByPurity(branchId,purityId);
+      const res = await metalRateApi.getRateByPurity(branchId,metalId,puirtyNo);
       console.log(res)
       setSelectedMetalRate(res.data.rate)
     } catch (err: any) {

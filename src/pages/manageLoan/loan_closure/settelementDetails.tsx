@@ -53,10 +53,10 @@ export default function SettelementDetails({
 
   const columnsData = itemData?.map((item: any, index: any) => ({
     id: index + 1,
-    metal: item.metalId.metalName,
-    Purity: item.purityId.purityName,
-    "Gross wt": item.grossWt,
-    "Net wt": item.netWt,
+    metal: item?.metalName,
+    Purity: item?.purityName,
+    "Gross wt": item?.grossWt,
+    "Net wt": item?.netWt,
   }));
   return (
     <>
@@ -194,8 +194,8 @@ export default function SettelementDetails({
           </Grid>
         </Box>
 
-        <Box px={2}>
-          <SubTable coloums={coloums} data={columnsData} action={false} />
+        <Box px={2} py={2}>
+          <SubTable coloums={coloums} data={columnsData} action={false} hidePagination={true} />
         </Box>
       </Card>
     </>

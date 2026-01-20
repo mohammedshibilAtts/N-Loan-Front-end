@@ -85,6 +85,23 @@ export function useLoanAccount() {
       setLoading(false);
     }
   };
+  const loanClose = async (data:any) => {
+    try {
+      setLoading(true);
+      const res = await loanAccountApi.close(data);
+        Toast.show({
+        message:res.message,
+        type: "success",
+      });
+    } catch (err: any) {
+      Toast.show({
+        message: err?.message || "Failed to fetch loans",
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   /* ---------- EXPORT ---------- */
   return {
@@ -98,5 +115,6 @@ export function useLoanAccount() {
     fetchLoanById,
     createLoanAccount,
     findAccByCustomers,
+    loanClose
   };
 }
