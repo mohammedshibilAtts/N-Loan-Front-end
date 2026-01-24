@@ -1,18 +1,17 @@
 // import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
-import { BRANCH_LIST, DASHBOARD_DATA } from '../../../store/actionTypes';
-import { _tasks, _posts, _timeline } from '../../../_mock';
+// import { BRANCH_LIST } from '../../../store/actionTypes'; // REMOVED
+// import { _tasks, _posts, _timeline } from '../../../_mock';
 import { DashboardContent } from '../../../layouts/dashboard';
 import { formatJoinDate, formatNumber } from "../../../utils/commonFunction"
 import { isAdmin, spliceDecimals } from "../../../const";
 import { Autocomplete, Box, Card, InputAdornment, Grid, TextField, Avatar, Divider } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { Store, ChevronDown, ChevronRight } from "lucide-react";
-import { apiClear, apiRequest } from "../../../store/actions";
-import API_ENDPOINTS from '../../../services/endpoints';
 import { PieChart } from '@mui/x-charts/PieChart';
 import DateRange from '../../../components/dateRange/dateRange';
+import { useDashboard } from '../useDashboard';
+import { useBranch } from '../../../pages/settings/branch/branchHooks';
 
 import wheel from "../../../../src-tauri/icons/wheel.svg"
 import locker1 from "../../../../src-tauri/icons/locker 1.svg"
@@ -25,34 +24,39 @@ import { useNavigate } from 'react-router-dom';
 
 export function OverviewAnalyticsView() {
 
-  const [branchData, setBranchData] = useState<{ branchName: string; _id: string }[]>([]);
-  const [totalAccCount, SetTotalAccCount] = useState();
-  const [paidAcc, SetPaidAcc] = useState();
-  const [overDue, SetOverDue] = useState<string | null>(null);
-  const [balance, SetBalance] = useState<string | null>(null);
-  const [collection, setCollection] = useState<any>();
-  const [lockerList, setLockerList] = useState<any[]>([]);
-  const [totalAccount, setTotalAccount] = useState<any>([]);
-  const [users, setUsers] = useState<any>([]);
-  // const [dashboardData, setDashboardData] = useState<any>([]);
-
+  /* 
+    State for filter params:
+    We'll assume the API accepts { branchId, fromDate, toDate }
+    mapped from filterValues and dateRange.
+  */
+  // const [branchData, setBranchData] = useState<{ branchName: string; _id: string }[]>([]); // using branches from hook directly
   const [filterValues, setFilterValues] = useState<{ [key: string]: any }>({});
   const [dateRange, setDateRange] = useState<{ startDate: Date | null; endDate: Date | null }>({ startDate: null, endDate: null });
+
   const userData = (localStorage.getItem("userInfo") || 'null');
-
-
   const userInfo = JSON.parse(userData);
   const username = userInfo?.username.charAt(0).toUpperCase() + userInfo?.username.slice(1);
 
   let navigate = useNavigate();
+  // const dispatch = useDispatch();
 
+  // Use the new custom hook
+  const {
+    collectionStats,
+    loanStatusCounts,
+    accountBalance,
+    recentUsers,
+    lockerCount,
+    fetchDashboardData
+  } = useDashboard();
 
-  const dispatch = useDispatch();
+  const { branches, fetchBranches } = useBranch();
 
   useEffect(() => {
-    dispatch(apiRequest(BRANCH_LIST, 'post', API_ENDPOINTS.SP.POST, { procedureName: 'findAll', params: { tableName: 'branch' } }));
-  }, [dispatch]);
+    fetchBranches();
+  }, []);
 
+  // --- Date Formatting ---
   const formatDate = (date: Date | null) => {
     if (!date) return "";
     const day = String(date.getDate()).padStart(2, "0");
@@ -61,70 +65,15 @@ export function OverviewAnalyticsView() {
     return `${day}/${month}/${year}`;
   };
 
+  // --- Fetch Dashboard Data ---
   useEffect(() => {
-    // if (!dateRange.startDate || !dateRange.endDate) return;
-
-    dispatch(apiRequest(DASHBOARD_DATA, 'post', API_ENDPOINTS.SP.POST, {
-      procedureName: "Dashboard",
-      "params": {
-        "branchId": filterValues?.branch || userInfo?.branchId,
-        "fromDate": formatDate(dateRange.startDate),
-        "toDate": formatDate(dateRange.endDate)
-      }
-    }));
-  }, [dispatch, filterValues?.branch, dateRange]);
-
-
-  useEffect(() => {
-    dispatch(apiClear(BRANCH_LIST));
-    dispatch(apiClear(DASHBOARD_DATA));
-
-    return () => {
-      dispatch(apiClear(BRANCH_LIST));
-      dispatch(apiClear(DASHBOARD_DATA));
+    const params = {
+      branchId: filterValues?.branch || userInfo?.branchId,
+      fromDate: formatDate(dateRange.startDate),
+      toDate: formatDate(dateRange.endDate)
     };
-  }, [dispatch]);
-
-
-  const { branchList, dashboardDataRes } = useSelector(
-    (states: any) => ({
-      branchList: states[BRANCH_LIST]?.data,
-      dashboardDataRes: states[DASHBOARD_DATA]?.data
-    })
-  );
-
-  useEffect(() => {
-    if (dashboardDataRes?.success) {
-      const data = dashboardDataRes.data;
-      // setDashboardData(data);
-
-      if (data.collectionSummary) {
-        const [paid, total] = data.collectionSummary.totalCollection.split('/');
-        SetPaidAcc(paid);
-        SetTotalAccCount(total);
-        SetOverDue(data.collectionSummary.overDueCollection);
-      }
-
-      setCollection({
-        totalAmount: data.collectionAmount,
-        interestAmount: data.interestCollected,
-        principalAmount: data.principalAmount
-      });
-
-      SetBalance(data.accountBalance);
-      setTotalAccount(data.loanDetails);
-      setUsers(data.recentUsers);
-      setLockerList(data.lockerDetails);
-    }
-  }, [dashboardDataRes]);
-
-  useEffect(() => {
-
-    if (branchList?.success) {
-      setBranchData(branchList.data.data);
-    }
-
-  }, [branchList]);
+    fetchDashboardData(params);
+  }, [filterValues?.branch, dateRange, fetchDashboardData, userInfo?.branchId]);
 
 
 
@@ -139,7 +88,7 @@ export function OverviewAnalyticsView() {
 
   const getOptionsForField = (fieldName: string) => {
     if (fieldName === "branch") {
-      return branchData.map((option) => ({
+      return branches.map((option) => ({
         label: option.branchName,
         value: option._id,
       }));
@@ -149,14 +98,17 @@ export function OverviewAnalyticsView() {
 
 
 
+  /* 
+     Mapped Data for UI
+  */
   const collectionData: any = [
-    { label: "Collection Amount", value: collection?.totalAmount, link: "/reports/payment-report", type: "" },
-    { label: "Interest Collected", value: collection?.interestAmount, link: "/reports/payment-report", type: "Interest" },
-    { label: "Principal Amount", value: collection?.principalAmount, link: "/reports/payment-report", type: "Principal" },
-    { label: "Account Balance", value: balance, link: "/reports/income-expenses-report" }
+    { label: "Collection Amount", value: collectionStats?.totalCollection || 0, link: "/reports/payment-report", type: "" },
+    { label: "Interest Collected", value: collectionStats?.interestCollected || 0, link: "/reports/payment-report", type: "Interest" },
+    { label: "Principal Amount", value: collectionStats?.principalCollected || 0, link: "/reports/payment-report", type: "Principal" },
+    { label: "Account Balance", value: accountBalance || 0, link: "/reports/income-expenses-report" }
   ];
 
-  const newUsers = users.slice(0, 5).map((user: any, index: number) => ({
+  const newUsers = (recentUsers || []).slice(0, 5).map((user: any, index: number) => ({
     id: user?._id || index + 1,
     name: `${user?.firstName} ${user?.lastName}`,
     avatarUrl: user?.img || `/api/placeholder/60/60`,
@@ -169,19 +121,19 @@ export function OverviewAnalyticsView() {
   const loandetails = [
     {
       label: 'Create',
-      value: totalAccount?.create || 0,
+      value: loanStatusCounts?.create || 0,
       color: "#E21269"
 
     },
     {
       label: 'Closed',
-      value: totalAccount?.closed || 0,
+      value: loanStatusCounts?.closed || 0,
       color: "#560BAD"
 
     },
     {
       label: 'OverDue',
-      value: totalAccount?.overDue || 0,
+      value: loanStatusCounts?.overDue || 0,
       color: "#FFC300"
 
     },
@@ -190,7 +142,7 @@ export function OverviewAnalyticsView() {
 
 
 
-  const safeLockerList = Array.isArray(lockerList) ? lockerList : [];
+  const safeLockerList = Array.isArray(lockerCount) ? lockerCount : [];
 
   return (
     <DashboardContent maxWidth="xl">
@@ -320,7 +272,7 @@ export function OverviewAnalyticsView() {
                     Collection Summary
                   </Typography>
                   <Typography sx={{ mx: 3, pt: 1, fontSize: "18px", fontWeight: 600 }}>
-                    {paidAcc}/{totalAccCount}
+                    {collectionStats?.paidCount || 0}/{collectionStats?.totalDueCount || 0}
                   </Typography>
                 </Box>
 
@@ -360,7 +312,7 @@ export function OverviewAnalyticsView() {
                     <ChevronRight size={18} style={{ marginTop: "1px" }} />
                   </Box>
                   <Chip
-                    label={`Over Due: ${overDue || 0}`}
+                    label={`Over Due: ${collectionStats?.overdueCollected || 0}`}
                     color="error"
                     variant="outlined"
                     sx={{ m: "8px", borderColor: "red" }}
