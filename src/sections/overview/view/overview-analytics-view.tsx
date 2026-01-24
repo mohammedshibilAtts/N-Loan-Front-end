@@ -24,11 +24,6 @@ import { useNavigate } from 'react-router-dom';
 
 export function OverviewAnalyticsView() {
 
-  /* 
-    State for filter params:
-    We'll assume the API accepts { branchId, fromDate, toDate }
-    mapped from filterValues and dateRange.
-  */
   // const [branchData, setBranchData] = useState<{ branchName: string; _id: string }[]>([]); // using branches from hook directly
   const [filterValues, setFilterValues] = useState<{ [key: string]: any }>({});
   const [dateRange, setDateRange] = useState<{ startDate: Date | null; endDate: Date | null }>({ startDate: null, endDate: null });
