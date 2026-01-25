@@ -1,13 +1,11 @@
 import { useEffect } from "react";
 import {
   Box,
-  // Card,
   Grid,
   TextField,
   Typography,
   Autocomplete,
   InputLabel,
-  // InputAdornment,
   Button,
 } from "@mui/material";
 import { ToastContainer } from "react-toastify";
@@ -22,7 +20,7 @@ import Page from "../../../components/Page";
 import "react-toastify/dist/ReactToastify.css";
 import { itemType } from "./newLoan";
 import { Toast } from "../../../components/toast/toast";
-import { defult22KPurityNo,  spliceDecimals } from "../../../const";
+import { defult22KPurityNo, spliceDecimals } from "../../../const";
 import { useMetal } from "../../master/metal/metalhooks";
 import { usePurity } from "../../master/purity/purityhooks";
 import { useItem } from "../../master/itemCreation/itemhooks";
@@ -52,6 +50,7 @@ export default function ItemDetails({
 
   useEffect(() => {
     fetchMetals();
+     formik.setFieldValue("boardRateAdj",0);
   }, []);
 
   const getInitialValues = () => {
@@ -73,13 +72,6 @@ export default function ItemDetails({
   };
 
   const fields: ValidationField[] = [
-    {
-      name: "baseMetalPrice",
-      label: "Select Matel",
-      placeHolder: "Enter First Name",
-      type: "text",
-      required: true,
-    },
     {
       name: "metalId",
       label: "Select Matel",
@@ -127,6 +119,13 @@ export default function ItemDetails({
       required: true,
       type: "text",
       placeHolder: "Enter Board Rate Adj",
+    },
+    {
+      name: "karatRate",
+      label: "karatRate",
+      required: true,
+      type: "text",
+      placeHolder: "karatRate",
     },
     {
       name: "groosWt",
@@ -209,23 +208,14 @@ export default function ItemDetails({
   useEffect(() => {
     if (!formik.values.purityId) return;
     fetchItems({ purityId: formik.values.purityId });
-      const metal: any = metals.find(
-        (m) => m._id === formik.values.metalId
-      );
-       const purity: any = purities.find(
-        (m) => m._id === formik.values.purityId
-      );
-    const purityNo = metal.metalNo==1?defult22KPurityNo:purity.purityNo
-    getRateByPurity(branchId, formik.values.metalId,purityNo);
-    formik.setFieldValue("metalPrice", selectedMetalRate);
-    formik.setFieldValue("baseMetalPrice", selectedMetalRate);
-  }, [formik.values.purityId,selectedMetalRate]);
+    const metal: any = metals.find((m) => m._id === formik.values.metalId);
+    const purity: any = purities.find((m) => m._id === formik.values.purityId);
+    const purityNo = metal.metalNo == 1 ? defult22KPurityNo : purity.purityNo;
+    getRateByPurity(branchId, formik.values.metalId, purityNo);
 
-  useEffect(() => {
-    if (selectedMetalRate) {
-      formik.setFieldValue("metalPrice", selectedMetalRate);
-    }
-  }, [selectedMetalRate]);
+  }, [formik.values.purityId, selectedMetalRate]);
+
+
 
   useEffect(() => {
     formik.setFieldValue("purityId", "");
@@ -249,45 +239,57 @@ export default function ItemDetails({
         (m) => m._id === formik.values.purityId
       );
       formik.setFieldValue("touch", purity?.purityPercentage || 0);
+     
     }
-  }, [formik.values.purityId]);
+  }, [formik.values.purityId,formik.values.touchAdj]);
+
+
 
   useEffect(() => {
-    const baseRate = Number(selectedMetalRate);
-    const ratePercent = Number(formik.values.boardRateAdj || 0);
-    if (!baseRate) return;
+    if (formik.values.touch) {
+      const findMetals: any = metals.find(
+        (i: any) => i._id == formik.values.metalId
+      );
+      const metalNumber = findMetals?.metalNo;
+      if (metalNumber == 1) {
+        const touch = spliceDecimals(formik.values.touch);
+        formik.setFieldValue(
+          "karatRate",
+          parseFloat(((touch / 100) * 24).toFixed(2))
+        );
+      }else{
+        formik.setFieldValue("metalPrice", selectedMetalRate);
+      }
+    }
+  }, [formik.values.touch,selectedMetalRate]);
 
-    const deduction = (baseRate * ratePercent) / 100;
-    const finalRate = spliceDecimals(baseRate - deduction, 2);
+  useEffect(() => {
+    if (formik.values.karatRate) {
+      if (!selectedMetalRate) return;
 
-    formik.setFieldValue("metalPrice", finalRate);
-  }, [formik.values.boardRateAdj]);
+      // ensure numeric values
+      const metalRateTd = spliceDecimals(selectedMetalRate);
+      const Karat = spliceDecimals(formik.values.karatRate);
+      const divideCal = 22;
+      const calculated = (Karat * metalRateTd) / divideCal; // number
+
+      const boardAdj = spliceDecimals(formik.values.boardRateAdj); // % (number)
+
+      // apply board rate deduction first (if any)
+      let adjRate =
+        boardAdj > 0 ? calculated - (calculated * boardAdj) / 100 : calculated;
+
+      
+      let finalValue = adjRate;
+
+      // round to 2 decimals and keep as number
+      const finalRate = spliceDecimals(finalValue);
+      console.log(finalRate);
+      formik.setFieldValue("metalPrice", finalRate);
+    }
+  }, [formik.values.karatRate, selectedMetalRate,  formik.values.boardRateAdj,]);
 
 
-useEffect(() => {
-  const baseRate = Number(formik.values.baseMetalPrice); // 24K rate
-  const touch = Number(formik.values.touch);
-  const boardAdj = Number(formik.values.boardRateAdj || 0);
-
-  if (!baseRate || !touch) return;
-
-  // Step 1: board rate adjustment
-  const adjustedRate =
-    baseRate - (baseRate * boardAdj) / 100;
-
-  // Step 2: apply touch (purity)
-  const finalRate = spliceDecimals(
-    adjustedRate * (touch / 100),
-    2
-  );
-
-  // Update metalPrice
-  formik.setFieldValue("metalPrice", finalRate);
-}, [
-  formik.values.touch,
-  formik.values.boardRateAdj,
-  formik.values.baseMetalPrice,
-]);
 
 
   return (
@@ -614,11 +616,18 @@ useEffect(() => {
                             </InputLabel>
 
                             <Box
-                              onClick={() =>
+                              onClick={() =>{
+                                if(formik.values.touchAdj){
+                                  formik.setFieldValue(
+                                  "boardRateAdj",
+                                  0
+                                )
+                                }
                                 formik.setFieldValue(
                                   "touchAdj",
                                   !formik.values.touchAdj
                                 )
+                              }
                               }
                               sx={{
                                 width: 80,
@@ -701,7 +710,7 @@ useEffect(() => {
                             // Allow only numbers and one dot
                             if (/^\d*\.?\d{0,2}$/.test(value)) {
                               const num = Number(value);
-                              
+
                               if (num >= 0 && num <= 100) {
                                 formik.setFieldValue("boardRateAdj", value);
                               }
@@ -722,6 +731,7 @@ useEffect(() => {
                           inputProps={{
                             min: 1,
                             max: 4,
+                            readOnly:!formik.values.touchAdj
                           }}
                         />
                       </Grid>

@@ -43,6 +43,17 @@ export function useBranch() {
     fetchBranches();
   };
 
+  const fetchTable = async (params?: any) => {
+    try {
+      setLoading(true);
+      const res = await branchApi.table(params);
+      setBranches(res?.data?.data || []);
+      return res?.data?.total || 0;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     branches,
     loading,
@@ -53,5 +64,6 @@ export function useBranch() {
     createBranch,
     updateBranch,
     deleteBranch,
+    fetchTable,
   };
 }

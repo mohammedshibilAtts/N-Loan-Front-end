@@ -485,7 +485,12 @@ export default function CreateCustomer({ handleCustomer }: any) {
       if (id) {
         await updateCustomer(id, formData);
       } else {
-        await createCustomer(formData);
+        let creation = await createCustomer(formData);
+
+        if(creation.status){
+          console.log(creation.data)
+          handleCustomer(creation.data._id)
+        }
       }
     },
 

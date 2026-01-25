@@ -5,6 +5,7 @@ export const interestPaymentApi = {
         apiService.post("/payment/due", data),
 
     create: (data: any) => apiService.post("/payment", data),
+    table: (data: any) => apiService.post("/payment/table", data),
 
     // Assuming these common endpoints exist or will exist consistent with other modules
     getRelationships: () => apiService.get("/common/relation"),

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 export function useLoanAccount() {
   /* ---------- STATE ---------- */
-  const [loans, setLoans] = useState<any[]>([]);
+  const [loansAccounts, setLoansAccount] = useState<any[]>([]);
   const [selectedLoan, setSelectedLoan] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -16,7 +16,7 @@ export function useLoanAccount() {
     try {
       setLoading(true);
       const res = await loanAccountApi.getAll();
-      setLoans(res.data || []);
+      setLoansAccount(res.data || []);
     } catch (err: any) {
       Toast.show({
         message: err?.message || "Failed to fetch loans",
@@ -54,7 +54,7 @@ export function useLoanAccount() {
         type: "success",
       });
 
-      navigate("/masters/loans");
+      navigate("/manageloan/existingloan");
       return true;
     } catch (err: any) {
       Toast.show({
@@ -75,7 +75,7 @@ export function useLoanAccount() {
       const { mobile, status } = data;
       setLoading(true);
       const res = await loanAccountApi.findAccByCustomers({ mobile, status });
-      setLoans(res.data || []);
+      setLoansAccount(res.data || []);
     } catch (err: any) {
       Toast.show({
         message: err?.message || "Failed to fetch loans",
@@ -93,6 +93,7 @@ export function useLoanAccount() {
         message:res.message,
         type: "success",
       });
+      navigate('/manageloan/loan-closure-history')
     } catch (err: any) {
       Toast.show({
         message: err?.message || "Failed to fetch loans",
@@ -103,10 +104,22 @@ export function useLoanAccount() {
     }
   };
 
+    const fetchTable = async (params?: any) => {
+      try {
+        setLoading(true);
+        const res = await loanAccountApi.table(params);
+        setLoansAccount(res?.data?.data || []);
+        return res?.data?.total || 0;
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+
   /* ---------- EXPORT ---------- */
   return {
     /* state */
-    loans,
+    loansAccounts,
     selectedLoan,
     loading,
 
@@ -115,6 +128,7 @@ export function useLoanAccount() {
     fetchLoanById,
     createLoanAccount,
     findAccByCustomers,
-    loanClose
+    loanClose,
+    fetchTable
   };
 }

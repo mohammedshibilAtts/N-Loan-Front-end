@@ -41,6 +41,8 @@ function ViewLoanAccounts() {
     );
   }
 
+  console.log(loanData.loanStatus)
+
 
   const fields: Field[] = [
     {
@@ -118,6 +120,15 @@ function ViewLoanAccounts() {
     
   ];
 
+  const loanStatus:any = {
+  0: { label: "OPEN", color: "#22C55E" },     // Vibrant Green
+  1: { label: "CLOSED", color: "#EF4444" },   // Vibrant Red
+  2: { label: "PRE", color: "#F59E0B" },      // Amber
+  3: { label: "AUCT", color: "#3B82F6" },     // Blue
+  4: { label: "ELIG", color: "#06B6D4" }, 
+
+  }
+
   const Loanfields: Field[] = [
     {
       name: "branchId",
@@ -138,6 +149,11 @@ function ViewLoanAccounts() {
       name: "Pay on Create",
       label: "Pay on Create",
       value: `${loanData.collectPaymentOnCreate ? "Yes" : "No"}`,
+    },
+    {
+      name: "loanStatus",
+      label: "Loan Status",
+      value: loanStatus[`${loanData.loanStatus}`].label,
     },
     {
       name: "Principal Amount",

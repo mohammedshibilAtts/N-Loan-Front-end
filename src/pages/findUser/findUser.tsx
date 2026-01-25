@@ -41,7 +41,7 @@ export default function FindUser({
 
   const { branches, fetchBranches } = useBranch();
   const { fetchCustomerBysearch } = useCustomer();
-  const { findAccByCustomers, loans } = useLoanAccount()
+  const { findAccByCustomers, loansAccounts } = useLoanAccount()
 
   useEffect(() => {
     fetchBranches();
@@ -128,10 +128,15 @@ export default function FindUser({
 
 
   useEffect(() => {
-    if (loans) {
-      setLoanData(loans);
+    if (loansAccounts) {
+      setLoanData(loansAccounts);
     }
-  }, [loans]);
+  }, [loansAccounts]);
+
+
+  useEffect(()=>{
+    formik.setFieldValue("mobile",9061166907)
+  },[])
 
   return (
     <>

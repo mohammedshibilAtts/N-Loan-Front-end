@@ -130,7 +130,7 @@ export const usePayment = () => {
             const res = await loanAccountApi.getById(id);
             if (res?.data) {
                 setLoanAccountData(res.data.loanData);
-                setItemData(res.data.items || []);
+                setItemData(res.data.items.item || []);
             }
         } catch (error: any) {
             console.error("Failed to fetch loan details", error);

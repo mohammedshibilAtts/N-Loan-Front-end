@@ -145,11 +145,11 @@ export default function Payment({
             label: "Remark",
             type: "text",
         },
-        {
-            name: "discount",
-            label: "Discount",
-            type: "text",
-        },
+        // {
+        //     name: "discount",
+        //     label: "Discount",
+        //     type: "text",
+        // },
     ];
 
     const initialValues = {
@@ -238,9 +238,9 @@ export default function Payment({
 
     const columnsData = (Array.isArray(itemData) ? itemData : [])?.map((item: any, index: any) => ({
         id: index + 1, // S.NO
-        metal: item?.metalId?.metalName || "N/A",
-        Purity: item?.purityId?.purityName || "N/A",
-        "Item Type": item?.itemId?.itemName || "N/A",
+        metal: item?.metalName || "N/A",
+        Purity: item?.purityName || "N/A",
+        "Item Type": item?.itemName || "N/A",
         "Gross wt": item?.grossWt || "N/A",
         "Net wt": item?.netWt || "N/A",
         Quantity: item?.quantity || "N/A",
@@ -310,7 +310,7 @@ export default function Payment({
                                     ))}
 
                                     {/* Discount Input Field */}
-                                    <Grid item xs={12} sm={6}>
+                                    {/* <Grid item xs={12} sm={6}>
                                         <Box sx={{ mb: 2 }}>
                                             <Typography
                                                 variant="body2"
@@ -337,7 +337,7 @@ export default function Payment({
                                                 }
                                             />
                                         </Box>
-                                    </Grid>
+                                    </Grid> */}
 
                                     {/* Net Amount Input Field */}
                                     <Grid item xs={12} sm={6}>

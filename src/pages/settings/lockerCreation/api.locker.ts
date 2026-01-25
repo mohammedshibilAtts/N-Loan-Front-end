@@ -35,4 +35,5 @@ export const lockerApi = {
   update: (id: string, data: LockerPayload) =>
     apiService.put(`locker/${id}`, data),
   delete: (id: string) => apiService.delete(`locker/${id}`),
+  table: (data: any) => apiService.post("/locker/table", data),
 };

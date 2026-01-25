@@ -4,7 +4,7 @@ import { Toast } from "../../../components/toast/toast";
 
 export function useMetalRate() {
   const [metalRates, setMetalRates] = useState<any[]>([]);
-  const [selectedMetalRate,setSelectedMetalRate]=useState({})
+  const [selectedMetalRate,setSelectedMetalRate]=useState<any>({})
   const [loading, setLoading] = useState(false);
 
   const fetchMetalRates = async (data: any) => {
@@ -46,7 +46,6 @@ export function useMetalRate() {
     try {
       setLoading(true);
       const res = await metalRateApi.getRateByPurity(branchId,metalId,puirtyNo);
-      console.log(res)
       setSelectedMetalRate(res.data.rate)
     } catch (err: any) {
       Toast.show({

@@ -136,7 +136,7 @@ export default function CustomPagination({
               "& .MuiSelect-select": { py: "4px" },
             }}
           >
-            {[5, 10, 25].map((opt) => (
+            {[1,2,3,5, 10, 25].map((opt) => (
               <MenuItem key={opt} value={opt} sx={{ fontSize: 13 }}>
                 {opt}
               </MenuItem>

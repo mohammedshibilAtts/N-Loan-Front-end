@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Card,
+  CircularProgress,
   InputLabel,
   Stack,
   TextField,
@@ -50,7 +51,7 @@ function LoanClosure() {
 
   const { GetClosedTypes, closedType } = useCloseType();
   const { fetchLoanById, selectedLoan } = useLoanAccount();
-  const { loanClose } = useLoanAccount();
+  const { loanClose, loading } = useLoanAccount();
 
   useEffect(() => {
     GetClosedTypes();
@@ -270,8 +271,13 @@ function LoanClosure() {
                 }}
                 onClick={handleSubmit}
                 style={{ background: "black" }}
+                disabled={loading}
               >
-                Save
+                {loading ? (
+                  <CircularProgress size={24} sx={{ color: "white" }} />
+                ) : (
+                  "Save"
+                )}
               </Button>
             </Grid>
           </>

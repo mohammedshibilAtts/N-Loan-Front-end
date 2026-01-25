@@ -1,4 +1,3 @@
-
 import { Helmet } from "react-helmet-async";
 import { useEffect, useState } from "react";
 import { CONFIG } from "../../../config-global";
@@ -11,17 +10,40 @@ import { ConfirmationDialog } from "../../../layouts/components/confirmationDial
 import { BranchForm } from "./branchForm";
 import { useBranch } from "./branchHooks";
 import SubTable from "../../../components/subTable/subTable";
+import { useTablePagination } from "../../../hooks/commonhooks/paginationHooks";
+import { useTableFilters } from "../../../hooks/commonhooks/tableFilterHooks";
+import FilterBar from "../../../components/filterLayout/filterLayout";
+import FilterItem from "../../../components/filterLayout/filterItem";
+import Search from "../../../components/search/search";
+import DropDown from "../../../components/dropdown/dropdown";
+import { formatDateTime } from "../../../utils/dateFormate";
+
+const branchTypeOptions = [
+  { value: 1, label: "Head Office" },
+  { value: 2, label: "Sub Branch" },
+];
 
 export default function BranchTable() {
   const {
     branches,
     loading,
-    fetchBranches,
+    fetchTable,
     deleteBranch,
     fetchBranchById,
     selectedBranch,
     setSelectedBranch,
   } = useBranch();
+
+  const {
+    page,
+    rowsPerPage,
+    totalCount,
+    setTotalCount,
+    onPageChange,
+    onRowsPerPageChange,
+  } = useTablePagination();
+
+  const { search, setSearch, filters, setFilters } = useTableFilters();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
@@ -29,8 +51,18 @@ export default function BranchTable() {
   const [branchToDelete, setBranchToDelete] = useState<any>(null);
 
   useEffect(() => {
-    fetchBranches();
-  }, []);
+    onPageChange(null, 0);
+  }, [search, filters]);
+
+  // Fetch data
+  useEffect(() => {
+    fetchTable({
+      page: page + 1,
+      limit: rowsPerPage,
+      search,
+      filters,
+    }).then(setTotalCount);
+  }, [page, rowsPerPage, search, filters]);
 
   /* ------------------ EDIT ------------------ */
   const handleEdit = async (row: any) => {
@@ -63,7 +95,6 @@ export default function BranchTable() {
     handleCloseForm();
   };
 
-  
   const BranchTypeBadge = (stockType: number) => {
     const config: Record<
       number,
@@ -92,30 +123,27 @@ export default function BranchTable() {
           "& .MuiChip-label": {
             padding: 0,
             width: "100%",
-            px:1
+            px: 1,
           },
         }}
       />
     );
   };
 
-
-
   const columns = [
     { id: "id", label: "S.NO" },
     { id: "branchName", label: "Name" },
-    { id: "branchType", label: "Third Party" },
+    { id: "branchType", label: "Branch Type" },
     // { id: "active", label: "Status" },
     { id: "createdAt", label: "Created At" },
   ];
 
   const tableData = branches.map((item: any, index: number) => ({
-    id: index + 1,
+    id: page * rowsPerPage + index + 1,
     _id: item._id,
-    branchName: item.branchName,
-    branchType:BranchTypeBadge(item.branchType),
-    //  active: <StatusToggle row={item} onToggle={handleToggleStatus} />,
-    createdAt: item.createdAt,
+    branchName: item.name,
+    branchType: BranchTypeBadge(item.branchType),
+    createdAt: formatDateTime(item.createdAt),
   }));
 
   return (
@@ -142,13 +170,45 @@ export default function BranchTable() {
           </Button>
         </Box>
 
-        <SubTable
-          coloums={columns}
-          data={tableData}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          loading={loading}
-        />
+        <Box bgcolor="#ffffff" px={2} py={1} sx={{ borderRadius: 1 }}>
+          <FilterBar
+            rows={[
+              <Box display="flex" gap={1} flexWrap="wrap">
+                <FilterItem>
+                  <Search onSearch={(v) => setSearch(v)} loading={loading} />
+                </FilterItem>
+                <FilterItem>
+                  <DropDown
+                    label="Branch Type"
+                    value={filters.branchType}
+                    options={branchTypeOptions}
+                    optionLabel="label"
+                    optionValue="value"
+                    onChange={(e) =>
+                      setFilters((prev: any) => ({
+                        ...prev,
+                        branchType: e.target.value,
+                      }))
+                    }
+                    size="small"
+                  />
+                </FilterItem>
+              </Box>,
+            ]}
+          />
+          <SubTable
+            coloums={columns}
+            data={tableData}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            loading={loading}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            count={totalCount}
+            onPageChange={onPageChange}
+            onRowsPerPageChange={onRowsPerPageChange}
+          />
+        </Box>
 
         {isFormOpen && (
           <BranchForm

@@ -16,6 +16,7 @@ import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import ImageUpload from "../../../components/imageUpload/uploadImage";
 import { spliceDecimals } from "../../../const";
+import { useEffect } from "react";
 
 const today = dayjs();
 const tenDaysAgo = today.subtract(10, "day");
@@ -31,7 +32,7 @@ export default function SettelementDetails({
   const Loanfields = [
     {
       label: "Loan Amount (Principal)",
-      value: spliceDecimals(accountData?.principalAmt,2) || "N/A",
+      value: spliceDecimals(accountData?.principalAmt, 2) || "N/A",
     },
     {
       label: "Total Interest Accrued",
@@ -39,7 +40,7 @@ export default function SettelementDetails({
     },
     {
       label: "Total Amount Paid",
-      value: spliceDecimals(accountData?.totalPaid,2) || "N/A",
+      value: spliceDecimals(accountData?.totalPaid, 2) || "N/A",
     },
   ];
 
@@ -58,6 +59,15 @@ export default function SettelementDetails({
     "Gross wt": item?.grossWt,
     "Net wt": item?.netWt,
   }));
+
+  useEffect(() => {
+    if (closureData?.closedThrough == "1") {
+      setClosureData((prev: any) => ({
+        ...prev,
+        additionalCharges: 0,
+      }));
+    }
+  }, [closureData.closedThrough]);
   return (
     <>
       <Card sx={{ my: 1 }}>
@@ -110,7 +120,9 @@ export default function SettelementDetails({
                   onChange={(newValue) => {
                     setClosureData((prev: any) => ({
                       ...prev,
-                      settlementDate: newValue ? newValue.toDate().toISOString() : null,
+                      settlementDate: newValue
+                        ? newValue.toDate().toISOString()
+                        : null,
                     }));
                   }}
                   slotProps={{
@@ -143,7 +155,14 @@ export default function SettelementDetails({
                     additionalCharges: value,
                   }));
                 }}
+                sx={{
+                  bgcolor:
+                    closureData?.closedThrough === "1"
+                      ? "grey.200"
+                      : "transparent",
+                }}
                 InputProps={{
+                  readOnly: closureData?.closedThrough == "1" ? true : false,
                   inputProps: { min: 0, step: 1 },
                   startAdornment: (
                     <InputAdornment position="start">
@@ -195,7 +214,12 @@ export default function SettelementDetails({
         </Box>
 
         <Box px={2} py={2}>
-          <SubTable coloums={coloums} data={columnsData} action={false} hidePagination={true} />
+          <SubTable
+            coloums={coloums}
+            data={columnsData}
+            action={false}
+            hidePagination={true}
+          />
         </Box>
       </Card>
     </>
