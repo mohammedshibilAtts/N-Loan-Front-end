@@ -1,7 +1,7 @@
 import { apiService } from "../../services/apiService";
 
 export const paymentApi = {
-    getDue: (data: { loanAccountId: string; paymentBasis: string }) =>
+    getDue: (data: { loanAccountId: string; paymentBasis: string; date?: string }) =>
         apiService.post("/payment/due", data),
 
     create: (data: any) => apiService.post("/payment", data),
