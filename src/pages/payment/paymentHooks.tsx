@@ -87,11 +87,11 @@ export const usePayment = () => {
         }
     };
 
-    const fetchDue = async (loanAccountId: string, paymentBasis: string) => {
+    const fetchDue = async (loanAccountId: string, paymentBasis: string, date?: string) => {
         if (!loanAccountId || !paymentBasis) return;
         try {
             setLoading(true);
-            const res = await paymentApi.getDue({ loanAccountId, paymentBasis });
+            const res = await paymentApi.getDue({ loanAccountId, paymentBasis, date });
             if (res?.success) {
                 setDueData(res.data);
             } else {

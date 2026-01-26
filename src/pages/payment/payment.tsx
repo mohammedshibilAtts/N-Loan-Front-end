@@ -55,6 +55,7 @@ export default function Payment({
 
     const [modalOpen, setModalOpen] = useState<boolean>(false);
     const [paymentEntries, setPaymentEntries] = useState<PaymentEntry[]>([]);
+    const [filterDate, setFilterDate] = useState<string>("");
 
     useEffect(() => {
         fetchRelationships();
@@ -217,9 +218,9 @@ export default function Payment({
 
     useEffect(() => {
         if (formik.values.paymentBasis && loanId) {
-            fetchDue(loanId, formik.values.paymentBasis); // Using loanId as loanAccountId
+            fetchDue(loanId, formik.values.paymentBasis, filterDate); // Using loanId as loanAccountId
         }
-    }, [formik.values.paymentBasis, loanId]);
+    }, [formik.values.paymentBasis, loanId, filterDate]);
 
 
     const handleModal = () => {
@@ -437,6 +438,25 @@ export default function Payment({
                                                             }}
                                                         />
                                                     )}
+                                                />
+                                            </Grid>
+                                            {/* Filter Date */}
+                                            {/* // after testing remove this */}
+                                            <Grid item xs={12} md={6}>
+                                                <Typography
+                                                    variant="body2"
+                                                    sx={{ fontWeight: 500, color: "black", mb: 0.5 }}
+                                                >
+                                                    Filter Date
+                                                </Typography>
+                                                <TextField
+                                                    type="date"
+                                                    fullWidth
+                                                    value={filterDate}
+                                                    onChange={(e) => setFilterDate(e.target.value)}
+                                                    sx={{
+                                                        "& .MuiOutlinedInput-root": { height: "46px" },
+                                                    }}
                                                 />
                                             </Grid>
 
