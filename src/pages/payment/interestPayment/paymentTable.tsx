@@ -117,22 +117,22 @@ function PaymentTable() {
                 <FilterItem>
                   <Search onSearch={(v) => setSearch(v)} loading={loading} />
                 </FilterItem>
-                {/* <FilterItem>
+                <FilterItem>
                   <DropDown
                     label="Payment Basis"
                     value={filters.paymentBasis}
                     options={paymentBasisList}
                     optionLabel="mode"
-                    optionValue="_id"
+                    optionValue="no"
                     onChange={(e) => {
                       setFilters((prev: any) => ({
                         ...prev,
-                        paymentBasisId: e.target.value,
+                        paymentBasis: e.target.value,
                       }));
                     }}
                     size="small"
                   />
-                </FilterItem> */}
+                </FilterItem>
               </Box>,
             ]}
           />
