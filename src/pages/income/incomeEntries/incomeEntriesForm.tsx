@@ -250,7 +250,7 @@ export const IncomeEntriesForm: React.FC<Props> = ({
                           {...params}
                           error={Boolean(
                             formik.touched[field.name] &&
-                            formik.errors[field.name]
+                              formik.errors[field.name]
                           )}
                           helperText={
                             (formik.touched[field.name] &&
@@ -283,12 +283,15 @@ export const IncomeEntriesForm: React.FC<Props> = ({
                               formik.setFieldTouched("incomeDate", true),
                             error: Boolean(
                               formik.touched.incomeDate &&
-                              formik.errors.incomeDate
+                                formik.errors.incomeDate
                             ),
                             helperText: (formik.touched.incomeDate &&
                               formik.errors.incomeDate) as string,
                           },
                         }}
+                        disableFuture
+                        minDate={dayjs().subtract(7, "day")}
+                        maxDate={dayjs()} // today only
                       />
                     </LocalizationProvider>
                   ) : (

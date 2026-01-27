@@ -288,6 +288,8 @@ function NewLoan() {
     }
   };
 
+
+
   return (
     <>
       <Box px={5}>

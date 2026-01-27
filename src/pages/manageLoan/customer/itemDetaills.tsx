@@ -130,7 +130,7 @@ export default function ItemDetails({
     {
       name: "karatRate",
       label: "karatRate",
-      required: true,
+      required: false,
       type: "text",
       placeHolder: "karatRate",
     },
@@ -317,6 +317,7 @@ export default function ItemDetails({
       }
   }, [formik.values.karatRate, selectedMetalRate, formik.values.boardRateAdj]);
 
+    console.log(formik.errors)
   return (
     <Page>
       <ToastContainer />

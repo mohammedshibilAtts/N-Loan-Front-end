@@ -97,23 +97,25 @@ export default function IncomeEntriesTable() {
 
     const columns = [
         { id: "id", label: "S.No" },
-        { id: "createdAt", label: "Income Date" },
+        { id: "incomeDate", label: "Income Date" },
         { id: "income", label: "Income" },
         { id: "subIncome", label: "Sub Income" },
         { id: "paymentMethod", label: "Payment Method" },
         { id: "paymentProvider", label: "Payment Provider" },
         { id: "amount", label: "Amount" },
+        { id: "createdAt", label: "Created At" },
     ];
 
     const tableData = entries.map((item, index) => ({
         id: index + 1,
         _id: item?._id,
-        createdAt: formatDateTime(item.incomeDate),
+        incomeDate: formatDateTime(item.incomeDate),
         income: item?.incomes?.incomeName,
         subIncome: item?.subincomes?.name,
         paymentMethod: item?.paymentmode?.mode,
         paymentProvider: item?.paymentProviders?.providerName,
         amount: item.amount,
+        createdAt: formatDateTime(item.createdAt),
     }));
 
     return (

@@ -97,23 +97,25 @@ export default function ExpenseEntriesTable() {
 
   const columns = [
     { id: "id", label: "S.No" },
-    { id: "createdAt", label: "Expense Date" },
+    { id: "expenseDate", label: "Expense Date" },
     { id: "expense", label: "Expense" },
     { id: "subExpense", label: "Sub Expense" },
     { id: "paymentMethod", label: "Payment Method" },
     { id: "paymentProvider", label: "Payment Provider" },
     { id: "amount", label: "Amount" },
+    { id: "createdAt", label: "Created At" },
   ];
 
   const tableData = entries.map((item, index) => ({
     id: index + 1,
     _id: item?._id,
-    createdAt: formatDateTime(item.createdAt),
+    expenseDate: formatDateTime(item.expenseDate),
     expense: item?.expenses?.expenseName,
     subExpense: item?.subExpenses?.name,
     paymentMethod: item?.paymentmode?.mode,
     paymentProvider: item?.paymentProviders?.providerName,
     amount: item.amount,
+    createdAt:  formatDateTime(item.createdAt),
   }));
 
   return (

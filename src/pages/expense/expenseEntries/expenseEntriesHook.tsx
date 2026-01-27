@@ -6,6 +6,7 @@ export function useExpenseEntries() {
   const [entries, setEntries] = useState<any[]>([]);
   const [selectedEntry, setSelectedEntry] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [params, setParams] = useState();
 
   const fetchEntries = async () => {
     try {
@@ -36,7 +37,8 @@ export function useExpenseEntries() {
       setLoading(true);
       await expenseEntriesApi.create(data);
       Toast.show({ message: "Expense entry created", type: "success" });
-      fetchEntries();
+      fetchTable(params);
+
       return true;
     } catch (err: any) {
       Toast.show({ message: err.message, type: "error" });
@@ -51,7 +53,8 @@ export function useExpenseEntries() {
       setLoading(true);
       await expenseEntriesApi.update(id, data);
       Toast.show({ message: "Expense entry updated", type: "success" });
-      fetchEntries();
+      fetchTable(params);
+
       return true;
     } catch (err: any) {
       Toast.show({ message: err.message, type: "error" });
@@ -66,7 +69,7 @@ export function useExpenseEntries() {
       setLoading(true);
       await expenseEntriesApi.delete(id);
       Toast.show({ message: "Expense entry deleted", type: "success" });
-      fetchEntries();
+      fetchTable(params);
     } catch (err: any) {
       Toast.show({ message: err.message, type: "error" });
     } finally {
@@ -74,16 +77,17 @@ export function useExpenseEntries() {
     }
   };
 
-      const fetchTable = async (params: any) => {
-      try {
-        setLoading(true);
-        const res = await expenseEntriesApi.table(params);
-        setEntries(res?.data?.data || []);
-        return res?.data?.total || 0;
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchTable = async (params: any) => {
+    try {
+      setParams(params);
+      setLoading(true);
+      const res = await expenseEntriesApi.table(params);
+      setEntries(res?.data?.data || []);
+      return res?.data?.total || 0;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return {
     entries,
@@ -95,6 +99,6 @@ export function useExpenseEntries() {
     updateEntry,
     deleteEntry,
     setSelectedEntry,
-    fetchTable
+    fetchTable,
   };
 }

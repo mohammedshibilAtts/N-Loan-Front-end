@@ -199,6 +199,8 @@ export const ExpenseEntriesForm: React.FC<Props> = ({
         {isEdit ? "Update Expense Entry" : "Add Expense Entry"}
       </DialogTitle>
 
+      
+
       <IconButton
         onClick={onClose}
         sx={{ position: "absolute", right: 8, top: 8 }}
@@ -248,7 +250,7 @@ export const ExpenseEntriesForm: React.FC<Props> = ({
                           {...params}
                           error={Boolean(
                             formik.touched[field.name] &&
-                            formik.errors[field.name]
+                              formik.errors[field.name]
                           )}
                           helperText={
                             (formik.touched[field.name] &&
@@ -281,12 +283,15 @@ export const ExpenseEntriesForm: React.FC<Props> = ({
                               formik.setFieldTouched("expenseDate", true),
                             error: Boolean(
                               formik.touched.expenseDate &&
-                              formik.errors.expenseDate
+                                formik.errors.expenseDate
                             ),
                             helperText: (formik.touched.expenseDate &&
                               formik.errors.expenseDate) as string,
                           },
                         }}
+                        disableFuture
+                        minDate={dayjs().subtract(7, "day")}
+                        maxDate={dayjs()} // today only
                       />
                     </LocalizationProvider>
                   ) : (

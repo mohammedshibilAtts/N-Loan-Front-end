@@ -8,53 +8,69 @@ function IncomeEntriesView({ data }: { data: any }) {
       label: "Income Date",
       value: data?.incomeDate
         ? new Date(data?.incomeDate).toLocaleDateString("en-GB")
-        : "N/A",
+        : "-",
     },
-    {
-      name: "incomeDate",
-      label: "Income Date",
-      value: data?.incomeDate
-        ? new Date(data.incomeDate).toLocaleTimeString("en-GB", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          }).toUpperCase()
-        : "N/A",
-    },
+    // {
+    //   name: "incomeDate",
+    //   label: "Income Date",
+    //   value: data?.incomeDate
+    //     ? new Date(data.incomeDate).toLocaleTimeString("en-GB", {
+    //         hour: "2-digit",
+    //         minute: "2-digit",
+    //         hour12: true,
+    //       }).toUpperCase()
+    //     : "-",
+    // },
     {
       name: "branch",
       label: "Branch",
-      value: data?.branch?.branchName || "N/A",
+      value: data?.branch?.branchName || "-",
     },
     {
       name: "income",
       label: "Income",
-      value: data?.income?.incomeName || "N/A",
+      value: data?.income?.incomeName || "-",
     },
     {
       name: "subIncome",
       label: "Sub Income",
-      value: data?.subIncome?.name || "N/A",
+      value: data?.subIncome?.name || "-",
     },
     {
       name: "paymentMethod",
       label: "Payment Method",
-      value: data?.paymentMethod?.mode || "N/A",
+      value: data?.paymentMethod?.mode || "-",
     },
     {
       name: "paymentProvider",
       label: "Payment Provider",
-      value: data?.paymentProvider?.providerName || "N/A",
+      value: data?.paymentProvider?.providerName || "-",
     },
     {
       name: "amount",
       label: "Amount",
-      value: `₹${spliceDecimals(data?.amount, 2)}` || "N/A",
+      value: `₹${spliceDecimals(data?.amount, 2)}` || "-",
     },
     {
       name: "remarks",
       label: "Remarks",
-      value: data?.remarks || "N/A",
+      value: data?.remarks || "-",
+    },
+    {
+      name: "createdAt",
+      label: "Created At",
+      value: data?.createdAt
+        ? new Date(data.createdAt)
+            .toLocaleString("en-GB", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            })
+            .toUpperCase()
+        : "-",
     },
   ];
 
