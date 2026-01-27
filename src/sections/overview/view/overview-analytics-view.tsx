@@ -17,6 +17,7 @@ import wheel from "../../../../src-tauri/icons/wheel.svg"
 import locker1 from "../../../../src-tauri/icons/locker 1.svg"
 import { Chip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useUserData } from '../../../hooks/commonhooks/userHook';
 
 
 
@@ -28,9 +29,11 @@ export function OverviewAnalyticsView() {
   const [filterValues, setFilterValues] = useState<{ [key: string]: any }>({});
   const [dateRange, setDateRange] = useState<{ startDate: Date | null; endDate: Date | null }>({ startDate: null, endDate: null });
 
-  const userData = (localStorage.getItem("userInfo") || 'null');
-  const userInfo = JSON.parse(userData);
-  const username = userInfo?.username.charAt(0).toUpperCase() + userInfo?.username.slice(1);
+  const {userData}=useUserData()
+
+  const userInfo = userData;
+  console.log(userData)
+  // const username = userInfo?.username.charAt(0).toUpperCase() + userInfo?.username.slice(1);
 
   let navigate = useNavigate();
   // const dispatch = useDispatch();
@@ -163,7 +166,7 @@ export function OverviewAnalyticsView() {
               fontSize: "24px",
             }}
           >
-            Hi, {username}!
+            Hi, {userData?.username}!
           </Typography>
           <Typography
             variant="h4"

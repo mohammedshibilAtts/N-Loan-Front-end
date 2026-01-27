@@ -12,6 +12,8 @@ export function useLogin() {
       setLoading(true);
       const res = await LoginApi.login(data);
       localStorage.setItem("accessToken", res.data.token);
+      const userData = res.data.user
+      localStorage.setItem("user", JSON.stringify(userData));
       Toast.show({ message: res.message, type: "success" });
     navigate("/");
     } catch (err: any) {

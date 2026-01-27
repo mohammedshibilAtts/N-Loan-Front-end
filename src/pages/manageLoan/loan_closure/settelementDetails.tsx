@@ -29,6 +29,7 @@ export default function SettelementDetails({
   setClosureData,
   customerData,
 }: any) {
+  
   const Loanfields = [
     {
       label: "Loan Amount (Principal)",

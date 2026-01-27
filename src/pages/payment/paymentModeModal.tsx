@@ -103,6 +103,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     },
   });
 
+  console.log(formik.errors)
   useEffect(() => {
     const totalEnteredAmount = entries.reduce(
       (acc: number, curr: any) => acc + Number(curr.amount || 0),
@@ -157,9 +158,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               <Autocomplete
                 options={paymentModes || []}
                 getOptionLabel={(opt) => opt.mode}
-                onChange={(_, val) =>
+                onChange={(_, val) =>{
                   formik.setFieldValue("paymentMethod", val?._id || "")
-                }
+                  formik.setFieldValue("paymentProvider","")
+                }}
                 value={
                   paymentModes.find(
                     (m: any) => m._id === formik.values.paymentMethod

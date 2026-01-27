@@ -19,13 +19,14 @@ import { Toast } from "../../../components/toast/toast";
 import { userInfo } from "../../../const";
 import { useCloseType } from "../../../hooks/commonhooks/closedHook";
 import { useLoanAccount } from "../customer/loanAccountHooks";
+import { useUserData } from "../../../hooks/commonhooks/userHook";
 
 function LoanClosure() {
   // const [userData, setUserData] = useState<{
   //   username: string;
   //   mobile: number;
   // } | null>({ mobile: userInfo.mobile, username: userInfo.username });
-  const userData = { mobile: userInfo?.mobile, username: userInfo.username };
+const {userData}=useUserData();
   const [customerData, setCustomerData] = useState<{
     customerName: string;
     mobile: string;
@@ -209,9 +210,6 @@ function LoanClosure() {
                     <TextField
                       value={
                         userData?.username
-                          ? userData?.username.charAt(0).toUpperCase() +
-                            userData?.username.slice(1)
-                          : ""
                       }
                       variant="outlined"
                       fullWidth

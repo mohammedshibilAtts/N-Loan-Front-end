@@ -172,8 +172,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               <Autocomplete
                 options={paymentMethod || []}
                 getOptionLabel={(opt) => opt.mode}
-                onChange={(_, val) =>
+                onChange={(_, val) =>{
                   formik.setFieldValue("paymentMethod", val?._id || "")
+                  formik.setFieldValue("paymentProvider", val?._id || "")
+                }
                 }
                 value={
                   paymentMethod.find(

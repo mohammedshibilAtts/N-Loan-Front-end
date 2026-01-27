@@ -22,10 +22,11 @@ import { usePrincipalAdjustment } from "./principalHooks";
 import { usePayment } from "../paymentHooks"; // For payment modes/providers
 import { useSelector } from "react-redux"; // Keeping only userInfo if needed, or remove if unused
 import { useInterest } from "../../master/interestCreation/interestHook";
+import { useUserData } from "../../../hooks/commonhooks/userHook";
 
 function PrincipalAmount() {
   const navigate = useNavigate();
-  const userInfo = useSelector((state: any) => state.userInfo);
+  const {userData}=useUserData()
 
   const {
     loading,
@@ -219,7 +220,7 @@ function PrincipalAmount() {
       const data = values;
       data.accountId = loanAccountData?._id;
       data.customerId = loanAccountData?.customerId._id; // Updated logic to get ID from loanAccountData
-      data.approvedBy = userInfo?.id;
+      data.approvedBy = userData?.id;
       data.totalProcessingFee =
         loanAccountData?.processingFee + Number(values.processingFee);
 
@@ -292,11 +293,10 @@ function PrincipalAmount() {
       formik.setFieldValue("maturityDate", loanAccountData.maturityDate);
       formik.setFieldValue(
         "authorizedBy",
-        userInfo?.username?.charAt(0).toUpperCase() +
-        userInfo?.username?.slice(1)
+        userData?.username
       );
     }
-  }, [loanAccountData, customerData, userInfo]);
+  }, [loanAccountData, customerData, userData]);
 
   /* ---------------- CALCULATIONS & LIMITS ---------------- */
   // Need to set limits based on totalAmount which was from ITEM_LIST (sp: findItemDetails).
