@@ -87,3 +87,12 @@ export const statusBadge = (status: number) => {
     />
   );
 };
+
+
+export const userInfo ={
+  id:"695ccaaa8e96a7833b5f589b",
+  mobile:123,
+  username:"1234"
+}
+
+export const defult22KPurityNo =1  // for fecth base matelRate based on purityNo

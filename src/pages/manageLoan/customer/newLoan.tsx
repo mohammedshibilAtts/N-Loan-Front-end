@@ -41,6 +41,9 @@ export interface itemType {
     _id: string;
     itemName: string;
   };
+  touch:Number,
+  boardRateAdj:Number,
+  metalRateAtCreation:Number,
   grossWt: number;
   netWt: number;
   quantity: number;
@@ -102,11 +105,14 @@ function NewLoan() {
 
   const coloums = [
     { id: "id", label: "S.NO" },
-    { id: "metal", label: "metal" },
+    { id: "metal", label: "Metal" },
     { id: "Purity", label: "Purity" },
+    { id: "touch", label: "Touch" },
+    { id: "boardRateAdj", label: "Board Rate Deduction" },
+    { id: "metalRateAtCreation", label: "Metal Rate" },
     { id: "Item Type", label: "Item Type" },
-    { id: "Gross wt", label: "Gross wt" },
-    { id: "Net wt", label: "Net WT" },
+    { id: "Gross wt", label: "Gross Wt" },
+    { id: "Net wt", label: "Net Wt" },
     { id: "Quantity", label: "Quantity" },
     { id: "Value", label: "Value" },
   ];
@@ -143,6 +149,10 @@ function NewLoan() {
     id: index + 1, // S.NO
     metal: item.metalId.metalName,
     Purity: item.purityId.purityName,
+    touch: item.touch,
+    boardRateAdj: item.boardRateAdj,
+    metalRateAtCreation: item.metalRateAtCreation,
+    // metalRateoFcreatedDay: item.boardRateAdj,
     "Item Type": item.itemId.itemName,
     "Gross wt": item.grossWt,
     "Net wt": item.netWt,
@@ -170,6 +180,9 @@ function NewLoan() {
     const itemDatas = itemData.map((item) => ({
       metalId: item.metalId._id,
       purityId: item.purityId._id,
+      touch: item.touch,
+      boardRateAdj: item.boardRateAdj,
+      metalRateAtCreation: item.metalRateAtCreation,
       itemId: item.itemId._id,
       quantity: item.quantity,
       grossWt: item.grossWt,

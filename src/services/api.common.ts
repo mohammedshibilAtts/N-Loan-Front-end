@@ -41,3 +41,7 @@ export const martialStatus = {
     getAll: () => apiService.get("common/martialstatus"),
 };
 
+export const closedTypes = {
+    getAll: () => apiService.get("common/closed"),
+};
+

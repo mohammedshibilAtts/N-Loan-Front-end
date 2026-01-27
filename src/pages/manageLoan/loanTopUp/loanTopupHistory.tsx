@@ -1,42 +1,79 @@
 import { Helmet } from "react-helmet-async";
-
 import { CONFIG } from "../../../config-global";
-import { DataTable } from "../../../components/datatable/datatableComp";
-import API_ENDPOINTS from "../../../services/endpoints";
-import {
-  LOAN_ACC_UPDATE_FIELD_RES,
-  LOAN_TOP_UP_TABLE,
-} from "../../../store/actionTypes";
 import { DashboardContent } from "../../../layouts/dashboard";
 import { Box, Button } from "@mui/material";
 import { Iconify } from "../../../components/iconify";
-// import { useDispatch } from 'react-redux';
-// import { apiRequest } from '../../store/actions';
 
 import { useNavigate } from "react-router-dom";
 import { Stack } from "@mui/material";
 import { Breadcrumb } from "../../../components/breadCrumbComp";
+import { useTablePagination } from "../../../hooks/commonhooks/paginationHooks";
+import { useEffect } from "react";
+import { useLoanTopUpHook } from "./loanTopupHook";
+import { formatDateTime } from "../../../utils/dateFormate";
+import SubTable from "../../../components/subTable/subTable";
+import { useTableFilters } from "../../../hooks/commonhooks/tableFilterHooks";
+import FilterBar from "../../../components/filterLayout/filterLayout";
+import FilterItem from "../../../components/filterLayout/filterItem";
+import Search from "../../../components/search/search";
 
 function LoanTopUpHistory() {
-  // const [isFormOpen, setIsFormOpen] = useState(false);
-  // const [isEdit, setEdit] = useState<any>(false);
+  const {
+    page,
+    rowsPerPage,
+    totalCount,
+    setTotalCount,
+    onPageChange,
+    onRowsPerPageChange,
+  } = useTablePagination();
 
-  // const dispatch = useDispatch();
-  let navigate = useNavigate();
+  const navigate = useNavigate();
+  const { topUpData, fetchTable, loading } = useLoanTopUpHook();
 
-  // Handle view action
-  const handleView = (row: { _id: string }) => {
-    navigate(`/manageloan/viewexistingloan/${row._id}`);
-  };
+  const { search, setSearch } = useTableFilters();
 
-  // Handle edit action
-  // const handleEdit = (row: any) => {
-  // navigate(`/manageloan/viewexistingloan/${row._id}`)
-  // };
+  // Reset page on search/filter change
+  useEffect(() => {
+    onPageChange(null, 0);
+  }, [search]);
 
-  const handlePrint = (row: { _id: string }) => {
-    navigate(`/manageloan/loan-print/${row._id}`);
-  };
+  // Fetch data
+  useEffect(() => {
+    fetchTable({
+      page: page + 1,
+      limit: rowsPerPage,
+      search
+    }).then(setTotalCount);
+  }, [page, rowsPerPage,search]);
+
+  const columns = [
+    { id: "id", label: "S.NO" },
+    { id: "loanNo", label: "Loan No" },
+    { id: "customerName", label: "Customer Name" },
+    { id: "mobile", label: "Mobile" },
+    { id: "loanType", label: "Loan Type" },
+    { id: "oldPrincipalAmt", label: "Old Principal Amount" },
+    { id: "newPrincipalAmt", label: "New Principal Amount" },
+    { id: "oldInterestAmount", label: "Old Interest Amount" },
+    { id: "newInterestAmount", label: "New Interest Amount" },
+    { id: "loanCreatedAt", label: "Loan Creation Date" },
+    { id: "loanTopupDate", label: "Top-up Created At" },
+  ];
+
+  const columnsData = topUpData.map((item: any, index: number) => ({
+    id: page * rowsPerPage + index + 1,
+    loanNo: item.loanNo || "-",
+    customerName: item.customerName || "-",
+    mobile: item.mobile || "-",
+    loanType: item.loanType || "-",
+    oldPrincipalAmt: item.oldPrincipalAmt?.toLocaleString() || "0",
+    newPrincipalAmt: item.newPrincipalAmt?.toLocaleString() || "0",
+    oldInterestAmount: item.oldInterestAmount?.toLocaleString() || "0",
+    newInterestAmount: item.newInterestAmount?.toLocaleString() || "0",
+    loanCreatedAt: formatDateTime(item.loanCreatedAt) || "-",
+    loanTopupDate: formatDateTime(item.loanTopupDate) || "-",
+    _id: item._id, // Keep internal ID if needed for operations
+  }));
 
   return (
     <>
@@ -67,17 +104,27 @@ function LoanTopUpHistory() {
           </Button>
         </Box>
 
-        <DataTable
-          actionType={LOAN_TOP_UP_TABLE}
-          endpoint={API_ENDPOINTS.SP.POST}
-          tableName="loanTopup"
-          populateFields={["customerId", "loanId","loanAccId"]}
-          filters={{}}
-          onView={handleView}
-          onPrint={handlePrint}
-          // onEdit={handleEdit}
-          statusType={LOAN_ACC_UPDATE_FIELD_RES}
-        />
+        <Box bgcolor="#ffffff" px={2} py={1} sx={{ borderRadius: 1 }}>
+          <FilterBar
+            rows={[
+              <Box display="flex" gap={1} flexWrap="wrap">
+                <FilterItem>
+                  <Search onSearch={(v) => setSearch(v)} loading={loading} />
+                </FilterItem>
+              </Box>,
+            ]}
+          />
+          <SubTable
+            coloums={columns}
+            data={columnsData}
+            loading={loading}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            count={totalCount}
+            onPageChange={onPageChange}
+            onRowsPerPageChange={onRowsPerPageChange}
+          />
+        </Box>
       </DashboardContent>
     </>
   );

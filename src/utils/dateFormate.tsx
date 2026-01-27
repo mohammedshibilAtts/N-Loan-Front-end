@@ -11,11 +11,11 @@ export const formatDateTime = (
   date?: string | Date | null,
   format: string = "DD/MM/YYYY"
 ): string => {
-  if (!date) return "N/A";
+  if (!date) return "-";
 
   const m = moment(date);
 
-  if (!m.isValid()) return "N/A";
+  if (!m.isValid()) return "-";
 
   return m.format(format);
 };

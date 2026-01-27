@@ -55,7 +55,7 @@ export default function PurityTable() {
       search,
       filters,
     }).then(setTotalCount);
-  }, [page, rowsPerPage, search, filters]);
+  }, [page, rowsPerPage, search, filters,isFormOpen]);
 
   /* ------------------ EDIT ------------------ */
   // const handleEdit = (row: any) => {
@@ -93,6 +93,7 @@ export default function PurityTable() {
   const columns = [
     { id: "id", label: "S.NO" },
     { id: "purityName", label: "Purity Name" },
+    { id: "touch", label: "Purity Percentage" },
     { id: "metalId", label: "Metal" },
     { id: "createdAt", label: "Created At" },
   ];
@@ -101,6 +102,7 @@ export default function PurityTable() {
     id: page * rowsPerPage + index + 1,
     _id: item._id,
     purityName: item.purityName,
+    touch: `${item.purityPercentage}%`,
     metalId: item.metal?.metalName || "-",
     createdAt: formatDateTime(item.createdAt),
   }));

@@ -11,17 +11,44 @@ import { Breadcrumb } from "../../../components/breadCrumbComp";
 import type { Locker } from "./api.locker";
 import { useLocker } from "./lockerHooks";
 import SubTable from "../../../components/subTable/subTable";
+import { useTablePagination } from "../../../hooks/commonhooks/paginationHooks";
+import { useTableFilters } from "../../../hooks/commonhooks/tableFilterHooks";
+import { formatDateTime } from "../../../utils/dateFormate";
+import FilterBar from "../../../components/filterLayout/filterLayout";
+import FilterItem from "../../../components/filterLayout/filterItem";
+import Search from "../../../components/search/search";
 
 export default function LockerTable() {
   const navigate = useNavigate();
-  const { lockers, loading, deleteLocker, fetchLockers } = useLocker();
+  const { lockers, loading, deleteLocker, fetchTable } = useLocker();
 
   const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
   const [lockerToDelete, setLockerToDelete] = useState<Locker | null>(null);
 
+  const {
+    page,
+    rowsPerPage,
+    totalCount,
+    setTotalCount,
+    onPageChange,
+    onRowsPerPageChange,
+  } = useTablePagination();
+
+  const { search, setSearch } = useTableFilters();
+
+  // Reset page on search/filter change
   useEffect(() => {
-    fetchLockers();
-  }, []);
+    onPageChange(null, 0);
+  }, [search]);
+
+  // Fetch data
+  useEffect(() => {
+    fetchTable({
+      page: page + 1,
+      limit: rowsPerPage,
+      search,
+    }).then(setTotalCount);
+  }, [page, rowsPerPage, search]);
 
   /* ---------- ACTIONS ---------- */
 
@@ -52,14 +79,16 @@ export default function LockerTable() {
   ];
 
   const tableData = lockers.map((item: any, index: number) => ({
-    id: index + 1,
-    _id:item._id,
-    lockerName: item.lockerName,
+    id: page * rowsPerPage + index + 1,
+    _id: item._id,
+    lockerName: item.name,
     licenseNo: item.licenseNo,
     mobile: item.mobile,
-    BranchName: item.BranchName,
-    createdAt: item.createdAt,
+    BranchName: item.branchName,
+    createdAt: formatDateTime(item.createdAt),
   }));
+
+  console.log(lockers);
 
   return (
     <>
@@ -85,14 +114,29 @@ export default function LockerTable() {
           </Button>
         </Box>
 
-        <SubTable
-          coloums={columns}
-          data={tableData}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          loading={loading}
-        />
-
+        <Box bgcolor="#ffffff" px={2} py={1} sx={{ borderRadius: 1 }}>
+          <FilterBar
+            rows={[
+              <Box display="flex" gap={1} flexWrap="wrap">
+                <FilterItem>
+                  <Search onSearch={(v) => setSearch(v)} loading={loading} />
+                </FilterItem>
+              </Box>,
+            ]}
+          />
+          <SubTable
+            coloums={columns}
+            data={tableData}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            loading={loading}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            count={totalCount}
+            onPageChange={onPageChange}
+            onRowsPerPageChange={onRowsPerPageChange}
+          />
+        </Box>
         <ConfirmationDialog
           open={confirmOpen}
           onClose={handleConfirmClose}

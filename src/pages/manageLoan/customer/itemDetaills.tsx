@@ -1,13 +1,11 @@
 import { useEffect } from "react";
 import {
   Box,
-  // Card,
   Grid,
   TextField,
   Typography,
   Autocomplete,
   InputLabel,
-  // InputAdornment,
   Button,
 } from "@mui/material";
 import { ToastContainer } from "react-toastify";
@@ -22,7 +20,7 @@ import Page from "../../../components/Page";
 import "react-toastify/dist/ReactToastify.css";
 import { itemType } from "./newLoan";
 import { Toast } from "../../../components/toast/toast";
-import { spliceDecimals } from "../../../const";
+import { defult22KPurityNo, spliceDecimals } from "../../../const";
 import { useMetal } from "../../master/metal/metalhooks";
 import { usePurity } from "../../master/purity/purityhooks";
 import { useItem } from "../../master/itemCreation/itemhooks";
@@ -52,6 +50,7 @@ export default function ItemDetails({
 
   useEffect(() => {
     fetchMetals();
+    formik.setFieldValue("boardRateAdj", 0);
   }, []);
 
   const getInitialValues = () => {
@@ -101,8 +100,43 @@ export default function ItemDetails({
       placeHolder: "Enter Quantity",
     },
     {
+      name: "touch",
+      label: "Enter Touch",
+      required: true,
+      type: "text",
+      placeHolder: "Enter Touch",
+    },
+    {
+      name: "touchAdj",
+      label: "Enter touchAdj",
+      required: false,
+      type: "checkbox",
+      placeHolder: "Enter touchAdj",
+    },
+    {
+      name: "boardRateAdj",
+      label: "Enter Board Rate Adj",
+      required: true,
+      type: "text",
+      placeHolder: "Enter Board Rate Adj",
+    },
+    {
+      name: "metalRateAtCreation",
+      label: "metalRateAtCreation",
+      required: true,
+      type: "text",
+      placeHolder: "metalRateAtCreation",
+    },
+    {
+      name: "karatRate",
+      label: "karatRate",
+      required: true,
+      type: "text",
+      placeHolder: "karatRate",
+    },
+    {
       name: "groosWt",
-      label: "Enter Groos Weight",
+      label: "Enter Gross Weight",
       required: true,
       type: "text",
       placeHolder: "Enter Groos Weight",
@@ -160,6 +194,9 @@ export default function ItemDetails({
       addItemFunction({
         metalId: metal,
         purityId: purity,
+        touch: values.touch,
+        boardRateAdj: values.boardRateAdj,
+        metalRateAtCreation: values.metalRateAtCreation,
         itemId: item,
         grossWt: values.groosWt,
         netWt: values.netWt,
@@ -180,15 +217,11 @@ export default function ItemDetails({
   useEffect(() => {
     if (!formik.values.purityId) return;
     fetchItems({ purityId: formik.values.purityId });
-    getRateByPurity(branchId, formik.values.purityId);
-    formik.setFieldValue("metalPrice", selectedMetalRate);
-  }, [formik.values.purityId]);
-
-  useEffect(() => {
-    if (selectedMetalRate) {
-      formik.setFieldValue("metalPrice", selectedMetalRate);
-    }
-  }, [selectedMetalRate]);
+    const metal: any = metals.find((m) => m._id === formik.values.metalId);
+    const purity: any = purities.find((m) => m._id === formik.values.purityId);
+    const purityNo = metal.metalNo == 1 ? defult22KPurityNo : purity.purityNo;
+    getRateByPurity(branchId, formik.values.metalId, purityNo);
+  }, [formik.values.purityId, selectedMetalRate]);
 
   useEffect(() => {
     formik.setFieldValue("purityId", "");
@@ -205,6 +238,84 @@ export default function ItemDetails({
       formik.setFieldValue("value", total);
     }
   }, [formik.values.metalPrice, formik.values.netWt]);
+
+  useEffect(() => {
+    if (formik.values.purityId) {
+      const purity: any = purities.find(
+        (m) => m._id === formik.values.purityId
+      );
+      formik.setFieldValue("touch", purity?.purityPercentage || 0);
+    }
+  }, [formik.values.purityId, formik.values.touchAdj]);
+
+  useEffect(() => {
+    if (formik.values.touch) {
+      const findMetals: any = metals.find(
+        (i: any) => i._id == formik.values.metalId
+      );
+      const metalNumber = findMetals?.metalNo;
+      if (metalNumber == 1) {
+        const touch = spliceDecimals(formik.values.touch);
+        formik.setFieldValue(
+          "karatRate",
+          parseFloat(((touch / 100) * 24).toFixed(2))
+        );
+      } else {
+        const purity: any = purities.find(
+        (m) => m._id === formik.values.purityId
+      );
+      formik.setFieldValue("touch", purity?.purityPercentage || 0);
+        formik.setFieldValue(
+          "metalRateAtCreation",
+          spliceDecimals(selectedMetalRate)
+        );
+        formik.setFieldValue("metalPrice", selectedMetalRate);
+      }
+    }
+  }, [formik.values.touch, selectedMetalRate]);
+
+  useEffect(() => {
+    if (formik.values.karatRate) {
+      if (!selectedMetalRate) return;
+      const findMetals: any = metals.find(
+        (i: any) => i._id == formik.values.metalId
+      );
+      const metalNumber = findMetals?.metalNo;
+      if (metalNumber == 1) {
+        // ensure numeric values
+        const metalRateTd = spliceDecimals(selectedMetalRate);
+        const Karat = spliceDecimals(formik.values.karatRate);
+        const divideCal = 22;
+        const calculated = (Karat * metalRateTd) / divideCal; // number
+
+        formik.setFieldValue("metalRateAtCreation", spliceDecimals(calculated));
+
+        const boardAdj = spliceDecimals(formik.values.boardRateAdj); // % (number)
+
+        // apply board rate deduction first (if any)
+        let adjRate =
+          boardAdj > 0
+            ? calculated - (calculated * boardAdj) / 100
+            : calculated;
+
+        let finalValue = adjRate;
+
+        // round to 2 decimals and keep as number
+        const finalRate = spliceDecimals(finalValue);
+        formik.setFieldValue("metalPrice", finalRate);
+      }else{
+          console.log("first")
+        const metalRateTd = spliceDecimals(selectedMetalRate);
+        const calc = metalRateTd * (1 - formik.values.boardRateAdj / 100)||0;
+        formik.setFieldValue("metalPrice", spliceDecimals(calc));
+      }
+    } else {
+        console.log("first")
+        const metalRateTd = spliceDecimals(selectedMetalRate);
+        const calc = metalRateTd * (1 - formik.values.boardRateAdj / 100)||0;
+        formik.setFieldValue("metalPrice", spliceDecimals(calc));
+      }
+  }, [formik.values.karatRate, selectedMetalRate, formik.values.boardRateAdj]);
 
   return (
     <Page>
@@ -470,6 +581,264 @@ export default function ItemDetails({
                         />
                       </Grid>
 
+                      {/* Touch field */}
+                      <Grid item xs={12} md={6}>
+                        <Grid container spacing={2} alignItems="flex-end">
+                          <Grid item xs={8}>
+                            <InputLabel
+                              htmlFor="touch"
+                              className="mb-2 flex items-center gap-1"
+                              style={{ color: "#09090F" }}
+                            >
+                              Enter Touch
+                              <span className="text-[#F04438] text-lg">*</span>
+                            </InputLabel>
+
+                            <TextField
+                              size="medium"
+                              fullWidth
+                              name="touch"
+                              type="text"
+                              placeholder="Enter Touch"
+                              value={formik.values.touch}
+                              onChange={(e) => {
+                                const value = e.target.value;
+
+                                // Allow only numbers and one dot
+                                if (/^\d*\.?\d{0,2}$/.test(value)) {
+                                  const num = Number(value);
+                                  if (num == 0)
+                                    return formik.setFieldValue("touch", "");
+                                  if (num >= 0 && num <= 100) {
+                                    formik.setFieldValue("touch", value);
+                                  }
+                                }
+                              }}
+                              onBlur={formik.handleBlur}
+                              error={
+                                formik.touched.touch &&
+                                Boolean(formik.errors.touch)
+                              }
+                              helperText={
+                                formik.touched.touch && formik.errors.touch
+                                  ? (formik.errors.touch as string)
+                                  : ""
+                              }
+                              autoComplete="off"
+                              inputProps={{
+                                min: 1,
+                                max: 4,
+                                readOnly: !formik.values.touchAdj,
+                              }}
+                            />
+                          </Grid>
+                          <Grid item xs={4}>
+                            <InputLabel
+                              className="mb-2 flex items-center gap-1"
+                              style={{ color: "#09090F" }}
+                            >
+                              Touch Adjustment
+                            </InputLabel>
+
+                            <Box
+                              onClick={() => {
+                                if (formik.values.touchAdj) {
+                                  formik.setFieldValue("boardRateAdj", 0);
+                                }
+                                formik.setFieldValue(
+                                  "touchAdj",
+                                  !formik.values.touchAdj
+                                );
+                              }}
+                              sx={{
+                                width: 80,
+                                height: 36,
+                                bgcolor: "#CFCFCF66",
+                                borderRadius: 999,
+                                px: 1,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                cursor: "pointer",
+                                position: "relative",
+                                userSelect: "none",
+                              }}
+                            >
+                              {/* Yes/No Labels */}
+                              <Box
+                                sx={{
+                                  fontWeight: 500,
+                                  color: formik.values.touchAdj
+                                    ? "black"
+                                    : "text.secondary",
+                                  zIndex: 1,
+                                }}
+                              >
+                                {formik.values.touchAdj ? "Yes" : ""}
+                              </Box>
+                              <Box
+                                sx={{
+                                  fontWeight: 500,
+                                  color: !formik.values.touchAdj
+                                    ? "black"
+                                    : "text.secondary",
+                                  zIndex: 1,
+                                }}
+                              >
+                                {!formik.values.touchAdj ? "No" : ""}
+                              </Box>
+
+                              {/* Dot */}
+                              <Box
+                                sx={{
+                                  position: "absolute",
+                                  left: formik.values.touchAdj
+                                    ? "calc(100% - 28px - 6px)"
+                                    : "6px",
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: "50%",
+                                  bgcolor: "#CFCFCF",
+                                  transition: "left 0.3s",
+                                }}
+                              />
+                            </Box>
+                          </Grid>
+                        </Grid>
+                      </Grid>
+
+                      {/* Metal Price field */}
+                      <Grid item xs={12} md={6}>
+                        <InputLabel
+                          htmlFor="metalPrice"
+                          className="mb-2 flex items-center gap-1"
+                          style={{ color: "#09090F" }}
+                        >
+                          Metal Rate
+                          <span className="text-[#F04438] text-lg">*</span>
+                        </InputLabel>
+
+                        <TextField
+                          size="medium"
+                          fullWidth
+                          name="metalRateAtCreation"
+                          type="text"
+                          placeholder="Metal Price"
+                          value={formik.values.metalRateAtCreation}
+                          onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
+                          error={
+                            formik.touched.metalRateAtCreation &&
+                            Boolean(formik.errors.metalRateAtCreation)
+                          }
+                          helperText={
+                            formik.touched.metalRateAtCreation &&
+                            formik.errors.metalRateAtCreation
+                              ? (formik.errors.metalRateAtCreation as string)
+                              : ""
+                          }
+                          autoComplete="off"
+                          inputProps={{
+                            min: 3,
+                            max: 50,
+                          }}
+                          InputProps={{
+                            readOnly: true,
+                          }}
+                        />
+                      </Grid>
+
+                      {/* Board Rate Deduction field */}
+                      <Grid item xs={12} md={6}>
+                        <InputLabel
+                          htmlFor="boardRateAdj"
+                          className="mb-2 flex items-center gap-1"
+                          style={{ color: "#09090F" }}
+                        >
+                          Enter Board Rate Deduction
+                          <span className="text-[#F04438] text-lg">*</span>
+                        </InputLabel>
+
+                        <TextField
+                          size="medium"
+                          fullWidth
+                          name="boardRateAdj"
+                          type="text"
+                          placeholder="Enter Board Rate Deduction"
+                          value={formik.values.boardRateAdj}
+                          onChange={(e) => {
+                            const value = e.target.value;
+
+                            // Allow only numbers and one dot
+                            if (/^\d*\.?\d{0,2}$/.test(value)) {
+                              const num = Number(value);
+
+                              if (num >= 0 && num <= 100) {
+                                formik.setFieldValue("boardRateAdj", value);
+                              }
+                            }
+                          }}
+                          onBlur={formik.handleBlur}
+                          error={
+                            formik.touched.boardRateAdj &&
+                            Boolean(formik.errors.boardRateAdj)
+                          }
+                          helperText={
+                            formik.touched.boardRateAdj &&
+                            formik.errors.boardRateAdj
+                              ? (formik.errors.boardRateAdj as string)
+                              : ""
+                          }
+                          autoComplete="off"
+                          inputProps={{
+                            min: 1,
+                            max: 4,
+                            readOnly: !formik.values.touchAdj,
+                          }}
+                        />
+                      </Grid>
+
+                      {/* Metal Price field */}
+                      <Grid item xs={12} md={6}>
+                        <InputLabel
+                          htmlFor="metalPrice"
+                          className="mb-2 flex items-center gap-1"
+                          style={{ color: "#09090F" }}
+                        >
+                          Metal Price After Deduction
+                          <span className="text-[#F04438] text-lg">*</span>
+                        </InputLabel>
+
+                        <TextField
+                          size="medium"
+                          fullWidth
+                          name="metalPrice"
+                          type="text"
+                          placeholder="Metal Price"
+                          value={formik.values.metalPrice}
+                          onChange={formik.handleChange}
+                          onBlur={formik.handleBlur}
+                          error={
+                            formik.touched.metalPrice &&
+                            Boolean(formik.errors.metalPrice)
+                          }
+                          helperText={
+                            formik.touched.metalPrice &&
+                            formik.errors.metalPrice
+                              ? (formik.errors.metalPrice as string)
+                              : ""
+                          }
+                          autoComplete="off"
+                          inputProps={{
+                            min: 3,
+                            max: 50,
+                          }}
+                          InputProps={{
+                            readOnly: true,
+                          }}
+                        />
+                      </Grid>
+
                       {/* Gross Weight field */}
                       <Grid item xs={12} md={6}>
                         <InputLabel
@@ -552,47 +921,6 @@ export default function ItemDetails({
                           inputProps={{
                             min: 1,
                             max: 4,
-                          }}
-                        />
-                      </Grid>
-
-                      {/* Metal Price field */}
-                      <Grid item xs={12} md={6}>
-                        <InputLabel
-                          htmlFor="metalPrice"
-                          className="mb-2 flex items-center gap-1"
-                          style={{ color: "#09090F" }}
-                        >
-                          Metal Price
-                          <span className="text-[#F04438] text-lg">*</span>
-                        </InputLabel>
-
-                        <TextField
-                          size="medium"
-                          fullWidth
-                          name="metalPrice"
-                          type="text"
-                          placeholder="Metal Price"
-                          value={formik.values.metalPrice}
-                          onChange={formik.handleChange}
-                          onBlur={formik.handleBlur}
-                          error={
-                            formik.touched.metalPrice &&
-                            Boolean(formik.errors.metalPrice)
-                          }
-                          helperText={
-                            formik.touched.metalPrice &&
-                            formik.errors.metalPrice
-                              ? (formik.errors.metalPrice as string)
-                              : ""
-                          }
-                          autoComplete="off"
-                          inputProps={{
-                            min: 3,
-                            max: 50,
-                          }}
-                          InputProps={{
-                            readOnly: true,
                           }}
                         />
                       </Grid>

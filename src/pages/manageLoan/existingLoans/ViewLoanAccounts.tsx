@@ -30,7 +30,7 @@ function ViewLoanAccounts() {
   }, [id]);
 
     const loanData = selectedLoan?.loanData;
-    const itemData = selectedLoan?.items;
+    const itemData = selectedLoan?.items?.item;
 
   // ✅ HARD GUARD (PREVENTS CRASH)
   if (!loanData) {
@@ -40,6 +40,8 @@ function ViewLoanAccounts() {
       </Page>
     );
   }
+
+  console.log(loanData.loanStatus)
 
 
   const fields: Field[] = [
@@ -118,6 +120,15 @@ function ViewLoanAccounts() {
     
   ];
 
+  const loanStatus:any = {
+  0: { label: "OPEN", color: "#22C55E" },     // Vibrant Green
+  1: { label: "CLOSED", color: "#EF4444" },   // Vibrant Red
+  2: { label: "PRE", color: "#F59E0B" },      // Amber
+  3: { label: "AUCT", color: "#3B82F6" },     // Blue
+  4: { label: "ELIG", color: "#06B6D4" }, 
+
+  }
+
   const Loanfields: Field[] = [
     {
       name: "branchId",
@@ -138,6 +149,11 @@ function ViewLoanAccounts() {
       name: "Pay on Create",
       label: "Pay on Create",
       value: `${loanData.collectPaymentOnCreate ? "Yes" : "No"}`,
+    },
+    {
+      name: "loanStatus",
+      label: "Loan Status",
+      value: loanStatus[`${loanData.loanStatus}`].label,
     },
     {
       name: "Principal Amount",
@@ -176,15 +192,15 @@ function ViewLoanAccounts() {
     },
   ];
 
-    const tableData = itemData.map((item:any, index:number) => ({
+    const tableData = itemData?.map((item:any, index:number) => ({
     id: index + 1, // S.NO
     tagNo: item?.tagId, // S.NO
-    metal: item?.metalId?.metalName,
-    Purity: item?.purityId?.purityName,
-    "item": item?.itemId?.itemName,
+    metal: item?.metalName,
+    Purity: item?.purityName,
+    "item": item?.itemName,
     "Net wt": item?.netWt,
     "Gross wt": item?.grossWt,
-    LockerName: item?.lockerId?.lockerName,
+    LockerName: item?.lockerName,
   }));
 
     const coloums = [

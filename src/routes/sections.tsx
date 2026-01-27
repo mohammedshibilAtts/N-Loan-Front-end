@@ -177,10 +177,10 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   });
 
 
-  if (!accessToken) {
-    localStorage.clear();
-    return <Navigate to="/sign-in" replace />;
-  }
+  // if (!accessToken) {
+  //   localStorage.clear();
+  //   return <Navigate to="/sign-in" replace />;
+  // }
 
   if (!isAllowed) {
     // return (<NoAccessPage/>);

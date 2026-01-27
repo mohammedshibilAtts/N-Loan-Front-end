@@ -1,114 +1,6 @@
-// import { useEffect, useState } from 'react';
-// import { useFormik } from 'formik';
-// import { useValidation } from '../../validations/useValidation';
-// import { ValidationField } from '../../validations/schemaBuilder';
 
-// import Box from '@mui/material/Box';
-// import TextField from '@mui/material/TextField';
-// import IconButton from '@mui/material/IconButton';
-// import InputAdornment from '@mui/material/InputAdornment';
-// import LoadingButton from '@mui/lab/LoadingButton';
-// import { Iconify } from '../../components/iconify';
-// import { useRouter } from '../../routes/hooks';
-// import { useDispatch, useSelector } from "react-redux";
-// import { addUserInfo, apiClear, apiRequest } from '../../store/actions';
-// import API_ENDPOINTS from '../../services/endpoints';
-// import useToast from '../../components/toastr/toastr';
-// // import Toast from "../../components/toastr/toastr";
-
-// export function SignInView() {
-//   const router = useRouter();
-//   const [showPassword, setShowPassword] = useState(false);
-//   const dispatch = useDispatch();
-//   const { showToast,Toast } = useToast();
-
-//   // Define fields with validation rules and labels
-//   const fields: ValidationField[] = [
-//     { name: 'username', label: 'Username', required: true, min: 1, max: 50, },
-//     { name: 'password', label: 'Password', required: true, min: 6, max: 50, type: 'password' },
-//   ];
-
-//   // Generate initialValues dynamically from fields
-//   const initialValues = Object.fromEntries(fields.map(({ name }) => [name, '']));
-
-//   // Get validation schema based on fields
-//   const validationSchema = useValidation(fields);
-
-//   const formik = useFormik({
-//     initialValues,
-//     validationSchema,
-//     onSubmit: (values) => {
-//       dispatch(apiRequest("login", "post", API_ENDPOINTS.AUTH.LOGIN, values));
-//     },
-//   });
-
-//   const loginState = useSelector((state: any) => state.login);
-//   // const loginState = useSelector((state: any) => state.api.login);
-//   const { data } = loginState || {};
-//   useEffect(() => {
-// // console.log(data);
-
-//     if (data) {
-//       if (data?.success == true) {
-//         localStorage.setItem("accessToken", data.token);
-//         console.log(data.data)
-//         dispatch(addUserInfo(data.data))
-//         router.push("/");
-//       } else {
-//         showToast({ message: data?.message, status: "error", isClose: true })
-//       }
-
-//       // dispatch(resetLoginState());
-//       dispatch(apiClear("login"));
-
-//     }
-//   }, [data, router]);
-
-//   return (
-//     <Box component="form" onSubmit={formik.handleSubmit} display="flex" flexDirection="column" alignItems="flex-end">
-//       {fields.map(({ name, label, type }) => (
-//         <TextField
-//           key={name}
-//           fullWidth
-//           name={name}
-//           label={label}
-//           type={name === 'password' ? (showPassword ? 'text' : 'password') : type || 'text'}
-//           value={formik.values[name]}
-//           onChange={formik.handleChange}
-//           onBlur={formik.handleBlur}
-//           error={formik.touched[name] && Boolean(formik.errors[name])}
-//           helperText={formik.touched[name] && formik.errors[name]}
-//           InputProps={
-//             name === 'password'
-//               ? {
-//                 endAdornment: (
-//                   <InputAdornment position="end">
-//                     <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-//                       <Iconify icon={showPassword ? 'solar:eye-bold' : 'solar:eye-closed-bold'} />
-//                     </IconButton>
-//                   </InputAdornment>
-//                 ),
-//               }
-//               : undefined
-//           }
-//           sx={{ mb: 3 }}
-//         />
-//       ))}
-
-//       <Toast />
-//       <LoadingButton fullWidth size="large" type="submit" color="inherit" variant="contained">
-//         Sign in
-//       </LoadingButton>
-//     </Box>
-//   );
-// }
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useFormik } from "formik";
-import { useDispatch, useSelector } from "react-redux";
-import { useRouter } from "../../routes/hooks";
-import { addUserInfo, apiClear, apiRequest } from "../../store/actions";
-import API_ENDPOINTS from "../../services/endpoints";
 import { useValidation } from "../../validations/useValidation";
 import { ValidationField } from "../../validations/schemaBuilder";
 import Background from "../../../public/assets/background/LoginBg.png";
@@ -127,13 +19,12 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { Eye, EyeOff } from "lucide-react";
-import { Toast } from "../../components/toast/toast";
+import { useLogin } from "./loginHook";
 
 export default function SignInView() {
-  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const dispatch = useDispatch();
+
+  const { login, loading } = useLogin();
 
   // Define validation fields
   const fields: ValidationField[] = [
@@ -160,27 +51,9 @@ export default function SignInView() {
     initialValues,
     validationSchema,
     onSubmit: (values) => {
-      setIsLoading(true);
-      dispatch(apiRequest("login", "post", API_ENDPOINTS.AUTH.LOGIN, values));
+      login(values);
     },
   });
-
-  const loginState = useSelector((state: any) => state.login);
-  const { data } = loginState || {};
-
-  useEffect(() => {
-    if (data) {
-      setIsLoading(false);
-      if (data?.success === true) {
-        localStorage.setItem("accessToken", data.token);
-        dispatch(addUserInfo(data.data));
-        router.push("/");
-      } else {
-        Toast.show({ message: data?.message || "Login failed", type: "error" });
-      }
-      dispatch(apiClear("login"));
-    }
-  }, [data, router, dispatch]);
 
   return (
     <Box
@@ -201,7 +74,7 @@ export default function SignInView() {
             <img
               src={LogoSvg}
               alt="Company Logo"
-              style={{ width:"185px", display: "block", margin: "0 auto" }}
+              style={{ width: "185px", display: "block", margin: "0 auto" }}
             />
           </Box>
 
@@ -292,7 +165,7 @@ export default function SignInView() {
               type="submit"
               fullWidth
               variant="contained"
-              disabled={isLoading}
+              disabled={loading}
               sx={{
                 py: 1.5,
                 mt: 2,
@@ -305,7 +178,7 @@ export default function SignInView() {
                 },
               }}
             >
-              {isLoading ? (
+              {loading ? (
                 <CircularProgress size={24} color="inherit" />
               ) : (
                 "Sign In"

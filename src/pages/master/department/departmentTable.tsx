@@ -57,7 +57,7 @@ export default function DepartmentTable() {
       search,
       filters,
     }).then(setTotalCount);
-  }, [page, rowsPerPage, search, filters]);
+  }, [page, rowsPerPage, search, filters,isFormOpen]);
 
   /* ------------------ EDIT ------------------ */
   const handleEdit = (row: any) => {
@@ -76,6 +76,12 @@ export default function DepartmentTable() {
     setConfirmOpen(false);
     if (confirmed && departmentToDelete) {
       await deleteDepartment(departmentToDelete._id);
+       fetchDepartmentTable({
+      page: page + 1,
+      limit: rowsPerPage,
+      search,
+      filters,
+    }).then(setTotalCount);
     }
   };
 

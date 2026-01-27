@@ -54,7 +54,7 @@ export default function LocalityTable() {
       search,
       filters,
     }).then(setTotalCount);
-  }, [page, rowsPerPage, search, filters]);
+  }, [page, rowsPerPage, search, filters,isFormOpen]);
 
   /* -------- EDIT -------- */
   const handleEdit = (row: any) => {

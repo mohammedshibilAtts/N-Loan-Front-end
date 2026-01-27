@@ -21,6 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { usePrincipalAdjustment } from "./principalHooks";
 import { usePayment } from "../paymentHooks"; // For payment modes/providers
 import { useSelector } from "react-redux"; // Keeping only userInfo if needed, or remove if unused
+import { useInterest } from "../../master/interestCreation/interestHook";
 
 function PrincipalAmount() {
   const navigate = useNavigate();
@@ -28,13 +29,13 @@ function PrincipalAmount() {
 
   const {
     loading,
-    interestTypes,
     loanAccountData,
-    fetchInterestTypes,
     fetchLoanDetails,
     createAdjustment,
     setLoanAccountData
   } = usePrincipalAdjustment();
+
+  const {fetchInterests,interests}=useInterest()
 
   const {
     paymentModes,
@@ -43,8 +44,6 @@ function PrincipalAmount() {
     fetchPaymentProviders
   } = usePayment();
 
-  const [customerId, setCustomerId] = useState<string>("");
-  const [branchId, setBranchId] = useState<string>("");
   const [selectedInterest, setSelectedInterest] = useState<any>();
   const [totalAmount, setTotalAmount] = useState<any>(0);
   const [minInterestRate, setMinInterestRate] = useState<any>(0);
@@ -58,12 +57,10 @@ function PrincipalAmount() {
   }>();
 
   useEffect(() => {
-    fetchInterestTypes();
+    fetchInterests();
     fetchPaymentModes();
 
     return () => {
-      setCustomerId("");
-      setBranchId("");
       setLoanAccountData(null);
       setTotalAmount(0);
       setMinInterestRate(0);
@@ -215,6 +212,10 @@ function PrincipalAmount() {
 
       if (hasError) return;
 
+      if(loanAccountData?.principalAmt==values.principalAmt){
+        return Toast.show({ message: "New principal amount must be different from the old amount.",type:"error" });
+      }
+
       const data = values;
       data.accountId = loanAccountData?._id;
       data.customerId = loanAccountData?.customerId._id; // Updated logic to get ID from loanAccountData
@@ -232,7 +233,7 @@ function PrincipalAmount() {
   });
 
   const handleCustomerId = (data: any) => {
-    setCustomerId(data._id);
+  
     setCustomerData({
       customerName: `${data.firstName} ${data.lastName}`,
       mobile: data.mobile,
@@ -242,15 +243,13 @@ function PrincipalAmount() {
   const handleLoanId = (id: string) => {
     fetchLoanDetails(id);
   };
-  const handleBranchId = (id: string) => {
-    setBranchId(id);
-  };
+  
 
   // Effect to update form values when loanAccountData changes
   useEffect(() => {
     if (loanAccountData) {
       // Update customer info if searching by Loan ID
-      setCustomerId(loanAccountData.customerId._id);
+     
       setCustomerData({
         customerName: `${loanAccountData.customerId.firstName} ${loanAccountData.customerId.lastName}`,
         mobile: loanAccountData.customerId.mobile,
@@ -272,25 +271,6 @@ function PrincipalAmount() {
   }, [loanAccountData]);
 
 
-  // We need itemData to calculate totalAmount?
-  // Original code: setTotalAmount(itemDetails?.data?.totalAmount);
-  // `itemDetails` came from `ITEM_LIST`.
-  // In `principalHooks`, `itemData` is set from `res.data.items`.
-  // Does `res.data` have `totalAmount`?
-  // Let's assume we need to calculate totalAmount from items or it was in the response.
-  // Checking `principalHooks.tsx`: `setLoanAccountData(res.data.loanData); setItemData(res.data.items || []);`
-  // Maybe `res.data` had `totalAmount`?
-  // I will check if I can pass `totalAmount` from hook. 
-  // Let's check `api.loanAccount.getById` response structure if possible. 
-  // For now, I will use itemData to calculate if needed, or check if totalAmount is available.
-  // Actually, let's look at `principalAmount.tsx` again. usage: `setTotalAmount(itemDetails?.data?.totalAmount)`
-  // So `itemDetails` (response of `findItemDetails` SP) had `totalAmount`.
-  // My new hook uses `loanAccountApi.getById`. Does it return `totalAmount`?
-  // Assuming `getById` returns `{ loanData: ..., items: ..., totalAmount: ... }` if it follows similar pattern.
-  // If not, I might need to calculate it.
-
-  // Let's check how to handle totalAmount logic. 
-  // Assuming `loanAccountData` population logic is handled in `useEffect` below.
 
   useEffect(() => {
     if (loanAccountData) {
@@ -359,13 +339,13 @@ function PrincipalAmount() {
 
   useEffect(() => {
     // Re-implementing logic with checks
-    if (loanAccountData && interestTypes.length > 0) {
+    if (loanAccountData && interests.length > 0) {
       // Just triggering re-calc if needed
       // Note: totalAmount is 0 initially.
       // We really need that totalAmount for limits. 
       // If it's missing, limits might be wrong.
     }
-  }, [loanAccountData, interestTypes]);
+  }, [loanAccountData, interests]);
 
 
   // ... Retaining the rest of the logic ...
@@ -392,7 +372,7 @@ function PrincipalAmount() {
 
     if (loanAccountData && loanAccountData.interestId) {
 
-      const interestInfo = interestTypes.find(i => i._id === loanAccountData.interestId._id) || loanAccountData.interestId;
+      const interestInfo = interests.find(i => i._id === loanAccountData.interestId._id) || loanAccountData.interestId;
 
       // Use logic
       const min = spliceDecimals(
@@ -409,7 +389,7 @@ function PrincipalAmount() {
       setMaxAllowedAmount(max);
       formik.setFieldValue("principalAmt", max);
     }
-  }, [loanAccountData, totalAmount, interestTypes]); // added deps
+  }, [loanAccountData, totalAmount, interests]); // added deps
 
 
   useEffect(() => {
@@ -471,7 +451,6 @@ function PrincipalAmount() {
         <FindUser
           title={"Principal Adjustment"}
           handleCustomerId={handleCustomerId}
-          handleBranch={handleBranchId}
           handleLoanId={handleLoanId}
         />
 
@@ -496,12 +475,12 @@ function PrincipalAmount() {
                             )}
                           </InputLabel>
                           <Autocomplete
-                            options={interestTypes?.map((option: any) => ({
+                            options={interests?.map((option: any) => ({
                               label: option.interestName,
                               value: option._id,
                             }))}
                             value={
-                              interestTypes
+                              interests
                                 ?.map((option: any) => ({
                                   label: option.interestName,
                                   value: option._id,
@@ -514,7 +493,7 @@ function PrincipalAmount() {
                             onChange={(_, value: any) => {
                               const interestId = value?.value || "";
                               formik.setFieldValue("interestId", interestId);
-                              const findInterest: any = interestTypes.find(
+                              const findInterest: any = interests.find(
                                 (p: any) => p._id === value?.value
                               );
                               setSelectedInterest(findInterest);
@@ -715,7 +694,7 @@ const PaymentFields: React.FC<PaymentFieldsProps> = ({ formik, methods, provider
           onChange={(_, val) => {
             formik.setFieldValue("paymentMethod", val?._id || "");
             formik.setFieldValue("paymentMethodMode", val?.mode || "");
-            formik.setFieldValue("paymentProvider", "");
+            formik.setFieldValue("paymentProvider",null);
           }}
           onBlur={() => formik.setFieldTouched("paymentMethod", true)}
           renderInput={(params) => (

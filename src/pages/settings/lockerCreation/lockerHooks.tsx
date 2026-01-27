@@ -80,7 +80,16 @@ export function useLocker() {
     }
   };
 
-
+  const fetchTable = async (params?: any) => {
+    try {
+      setLoading(true);
+      const res = await lockerApi.table(params);
+      setLockers(res?.data?.data || []);
+      return res?.data?.total || 0;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return {
     /* data */
@@ -93,8 +102,9 @@ export function useLocker() {
     /* actions */
     fetchLockers,
     fetchLockerById,
-    createLocker,   
-    updateLocker,   
+    createLocker,
+    updateLocker,
     deleteLocker,
+    fetchTable,
   };
 }

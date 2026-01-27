@@ -55,16 +55,15 @@ export function useCustomer() {
   };
 
   /* ---------- CREATE ---------- */
-  const createCustomer = async (data: any): Promise<boolean> => {
+  const createCustomer = async (data: any): Promise<{status:boolean,data:any}> => {
     try {
       setLoading(true);
-      await customerApi.create(data);
+      let res = await customerApi.create(data);
       Toast.show({ message: "Customer created successfully", type: "success" });
-      fetchCustomers();
-      return true;
+      return {status:true,data:res?.result}
     } catch (err: any) {
       Toast.show({ message: err.message, type: "error" });
-      return false;
+      return {status:false,data:null}
     } finally {
       setLoading(false);
     }
@@ -102,6 +101,18 @@ export function useCustomer() {
     }
   };
 
+   const fetchTable = async (params?: any) => {
+        try {
+          setLoading(true);
+          const res = await customerApi.table(params);
+          setCustomers(res?.data?.data || []);
+          return res?.data?.total || 0;
+        } finally {
+          setLoading(false);
+        }
+      };
+    
+
   return {
     customers,
     selectedCustomer,
@@ -112,5 +123,6 @@ export function useCustomer() {
     updateCustomer,
     deleteCustomer,
     fetchCustomerBysearch,
+    fetchTable
   };
 }

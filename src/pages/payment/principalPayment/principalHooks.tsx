@@ -5,21 +5,11 @@ import { loanAccountApi } from "../../manageLoan/customer/api.loanAccount";
 
 export const usePrincipalAdjustment = () => {
     const [loading, setLoading] = useState(false);
-    const [interestTypes, setInterestTypes] = useState<any[]>([]);
     const [loanAccountData, setLoanAccountData] = useState<any>(null);
     const [itemData, setItemData] = useState<any[]>([]);
+    const [data, setData] = useState<any[]>([]);
 
-    const fetchInterestTypes = async () => {
-        try {
-            const res = await principalApi.getInterestTypes();
-            if (res?.success) {
-                setInterestTypes(res.data.data);
-            }
-        } catch (error) {
-            console.error("Failed to fetch interest types", error);
-        }
-    };
-
+   
     const fetchLoanDetails = async (id: string) => {
         try {
             setLoading(true);
@@ -56,15 +46,28 @@ export const usePrincipalAdjustment = () => {
         }
     };
 
+      const fetchTable = async (params?: any) => {
+        try {
+          setLoading(true);
+          const res = await principalApi.table(params);
+          setData(res?.data?.data || []);
+          return res?.data?.total || 0;
+        } finally {
+          setLoading(false);
+        }
+      };
+
+
+
     return {
         loading,
-        interestTypes,
         loanAccountData,
         itemData,
-        fetchInterestTypes,
         fetchLoanDetails,
         createAdjustment,
         setLoanAccountData,
         setItemData,
+        fetchTable,
+        data
     };
 };

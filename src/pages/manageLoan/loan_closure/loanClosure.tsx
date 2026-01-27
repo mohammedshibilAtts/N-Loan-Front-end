@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Card,
+  CircularProgress,
   InputLabel,
   Stack,
   TextField,
@@ -10,38 +11,26 @@ import {
 import { Breadcrumb } from "../../../components/breadCrumbComp";
 import FindUser from "../../findUser/findUser";
 import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { apiRequest } from "../../../store/actions";
-import {
-  CLOSE_TYPES,
-  ITEM_DETAILS_LIST,
-  LOAN_ACC_LIST,
-  LoanAccount_UPDATE_RES,
-} from "../../../store/actionTypes";
-import API_ENDPOINTS from "../../../services/endpoints";
-import { itemType } from "../loanTopUp/loanTopUp";
+
 import UserDetails from "./loanDetails";
 import SettelementDetails from "./settelementDetails";
 import { Grid } from "@mui/material";
 import { Toast } from "../../../components/toast/toast";
+import { userInfo } from "../../../const";
+import { useCloseType } from "../../../hooks/commonhooks/closedHook";
+import { useLoanAccount } from "../customer/loanAccountHooks";
 
 function LoanClosure() {
-  const dispatch = useDispatch();
-  const userInfo = useSelector((state: any) => state.userInfo);
   // const [userData, setUserData] = useState<{
   //   username: string;
   //   mobile: number;
   // } | null>({ mobile: userInfo.mobile, username: userInfo.username });
-  const userData = { mobile: userInfo.mobile, username: userInfo.username };
-  const [loanAccountData, setLoanAccountData] = useState<any>();
-  const [itemData, setItemData] = useState<itemType[]>([]);
-  const [customerId, setCustomerId] = useState<string>("");
-  const [branchId, setBranchId] = useState<string>("");
+  const userData = { mobile: userInfo?.mobile, username: userInfo.username };
   const [customerData, setCustomerData] = useState<{
     customerName: string;
     mobile: string;
     address: string;
-    img: string
+    img: string;
   }>();
   const [closureData, setClosureData] = useState<{
     settlementDate: Date | null;
@@ -49,106 +38,44 @@ function LoanClosure() {
     closedThrough: string;
     remark: string;
     closedBy: "";
-    closerImg: any
+    closerImg: any;
   }>({
     settlementDate: null,
     additionalCharges: 0,
     closedThrough: "",
     remark: "",
     closedBy: "",
-    closerImg: ""
+    closerImg: "",
   });
   const [loanId, setLoanId] = useState<string>("");
-  const [closedType, setClosedType] = useState<any>([]);
+
+  const { GetClosedTypes, closedType } = useCloseType();
+  const { fetchLoanById, selectedLoan } = useLoanAccount();
+  const { loanClose, loading } = useLoanAccount();
+
+  useEffect(() => {
+    GetClosedTypes();
+  }, []);
 
   const handleCustomerId = (data: any) => {
-    setCustomerId(data._id);
     setCustomerData({
       customerName: `${data.firstName}${data.lastName}`,
-      mobile: data.mobile,
+      mobile: data?.mobile,
       address: data.address,
-      img: data.img
+      img: data.img,
     });
-  };
-
-  const handleBranchId = (id: string) => {
-    setBranchId(id);
   };
 
   const handleLoanId = (id: string) => {
     setLoanId(id);
-    dispatch(
-      apiRequest(ITEM_DETAILS_LIST, "post", API_ENDPOINTS.SP.POST, {
-        procedureName: "findAll",
-        params: {
-          tableName: "itemDetail",
-          filters: {
-            branchId,
-            customerId,
-            accountId: id,
-          },
-          populateFields: ["metalId", "purityId", "itemId"],
-        },
-      })
-    );
-    dispatch(
-      apiRequest(LOAN_ACC_LIST, "post", API_ENDPOINTS.SP.POST, {
-        procedureName: "findCloseAccount",
-        params: {
-          tableName: "loanAccount",
-          id,
-          populateFields: ["loanId"],
-        },
-      })
-    );
+    fetchLoanById(id);
   };
 
-  const { itemDetails, accountData, closedList, closedRes } = useSelector(
-    (states: any) => ({
-      itemDetails: states[ITEM_DETAILS_LIST]?.data,
-      accountData: states[LOAN_ACC_LIST]?.data,
-      closedList: states[CLOSE_TYPES]?.data,
-      closedRes: states[LoanAccount_UPDATE_RES]?.data,
-    })
-  );
-
-  useEffect(() => {
-    dispatch(
-      apiRequest(CLOSE_TYPES, "post", API_ENDPOINTS.SP.POST, {
-        procedureName: "findAll",
-        params: {
-          tableName: "closedThrough",
-        },
-      })
-    );
-  }, []);
-
-  useEffect(() => {
-    if (itemDetails?.success) {
-      setItemData(itemDetails.data.data);
-    }
-    if (accountData?.success) {
-      setLoanAccountData(accountData.data);
-    }
-    if (closedList?.success) {
-      setClosedType(closedList.data.data);
-    }
-
-  }, [itemDetails, accountData, closedList]);
-
-  useEffect(() => {
-    if (closedRes) {
-      // setLoading(false)
-      if (closedRes?.success) {
-        return Toast.show({ message: "Account Closed Successfuly", type: "success" });
-      }
-      return Toast.show({ message: closedRes.message, type: "error" });
-
-    }
-  }, [closedRes])
-
   const handleSubmit = () => {
-    if (closureData.closedThrough === null || closureData.closedThrough === undefined) {
+    if (
+      closureData.closedThrough === null ||
+      closureData.closedThrough === undefined
+    ) {
       Toast.show({
         message: "Please select a 'Closed Through' option.",
         type: "error",
@@ -161,45 +88,37 @@ function LoanClosure() {
         message: "Settlement Date is required",
         type: "error",
       });
-      return
-
+      return;
     }
     if (!userInfo?.id) {
       Toast.show({
         message: "Something went wrong. Please log in again and try.",
         type: "error",
       });
-      return
+      return;
     }
-
 
     const formData = new FormData();
     if (closureData.closerImg) {
       formData.append("closerImg", closureData.closerImg);
     }
-    const data: any = {
-      procedureName: "loanClosure",
-      params: {
-        tableName: "loanAccount",
-        id: loanAccountData._id,
-        data: {
-          loanStatus: 1,
-          closedThrough: Number(closureData.closedThrough),
-          additionalCharges: loanAccountData.additionalCharges + closureData.additionalCharges,
-          closedBy: userInfo?.id,
-          settlementDate: closureData?.settlementDate
-        },
+    // const data: any = {
+    //   procedureName: "loanClosure",
+    const data = {
+      loanId: selectedLoan?.loanData?._id,
+      closureData: {
+        loanStatus: 1,
+        closedThrough: Number(closureData.closedThrough),
+        additionalCharges:
+          selectedLoan.additionalCharges + closureData.additionalCharges,
+        closedBy: userInfo?.id,
+        settlementDate: closureData?.settlementDate,
       },
     };
+
     formData.append("data", JSON.stringify(data));
-    formData.append("procedureName", data.procedureName);
-    dispatch(
-      apiRequest(LoanAccount_UPDATE_RES, "postFile", API_ENDPOINTS.SP_FILE.POST_FILE('loanClousure'), formData)
-    );
 
-
-
-    return
+    loanClose(formData);
   };
 
   return (
@@ -219,17 +138,19 @@ function LoanClosure() {
         <FindUser
           title={"Loan Closure"}
           handleCustomerId={handleCustomerId}
-          handleBranchId={handleBranchId}
           handleLoanId={handleLoanId}
           loanType={2}
         />
 
         {loanId && (
           <>
-            <UserDetails accountData={loanAccountData} data={customerData} />
+            <UserDetails
+              accountData={selectedLoan?.loanData}
+              data={customerData}
+            />
             <SettelementDetails
-              accountData={loanAccountData}
-              itemData={itemData}
+              accountData={selectedLoan?.loanData}
+              itemData={selectedLoan?.items?.item}
               setClosureData={setClosureData}
               closureData={closureData}
               customerData={customerData}
@@ -258,10 +179,7 @@ function LoanClosure() {
                         }));
                       }}
                       renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          variant="outlined"
-                        />
+                        <TextField {...params} variant="outlined" />
                       )}
                       sx={{ mb: 2 }}
                     />
@@ -292,7 +210,7 @@ function LoanClosure() {
                       value={
                         userData?.username
                           ? userData?.username.charAt(0).toUpperCase() +
-                          userData?.username.slice(1)
+                            userData?.username.slice(1)
                           : ""
                       }
                       variant="outlined"
@@ -353,13 +271,17 @@ function LoanClosure() {
                 }}
                 onClick={handleSubmit}
                 style={{ background: "black" }}
+                disabled={loading}
               >
-                Save
+                {loading ? (
+                  <CircularProgress size={24} sx={{ color: "white" }} />
+                ) : (
+                  "Save"
+                )}
               </Button>
             </Grid>
           </>
         )}
-
       </Box>
     </>
   );

@@ -49,7 +49,7 @@ export default function MetalTable() {
       search,
       filters,
     }).then(setTotalCount);
-  }, [page, rowsPerPage, search, filters]);
+  }, [page, rowsPerPage, search, filters,isFormOpen]);
 
   const handleEdit = async (row: any) => {
     setIsEdit(true);

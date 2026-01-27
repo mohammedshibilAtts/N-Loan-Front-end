@@ -25,19 +25,16 @@ export function useDepartment() {
   const createDepartment = async (data: any) => {
     const res = await departmentApi.create(data);
     Toast.show({ message: res?.message, type: "success" });
-    fetchDepartments();
   };
 
   const updateDepartment = async (id: string, data: any) => {
     const res = await departmentApi.update(id, data);
     Toast.show({ message: res?.message, type: "success" });
-    fetchDepartments();
   };
 
   const deleteDepartment = async (id: string) => {
     const res = await departmentApi.delete(id);
     Toast.show({ message: res?.message, type: "success" });
-    fetchDepartments();
   };
 
  const updateDepartmentStatus = async (id: string) => {

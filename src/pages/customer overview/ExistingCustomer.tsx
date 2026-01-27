@@ -7,16 +7,40 @@ import { Breadcrumb } from "../../components/breadCrumbComp";
 import { Iconify } from "../../components/iconify";
 import { useCustomer } from "./customerHooks";
 import SubTable from "../../components/subTable/subTable";
+import { useTablePagination } from "../../hooks/commonhooks/paginationHooks";
+import { useTableFilters } from "../../hooks/commonhooks/tableFilterHooks";
+import FilterBar from "../../components/filterLayout/filterLayout";
+import FilterItem from "../../components/filterLayout/filterItem";
+import Search from "../../components/search/search";
 
 export default function ExistingCustomer() {
   const navigate = useNavigate();
-  const { customers, fetchCustomers, loading } = useCustomer();
+  const { customers, fetchTable, loading } = useCustomer();
 
+  const {
+    page,
+    rowsPerPage,
+    totalCount,
+    setTotalCount,
+    onPageChange,
+    onRowsPerPageChange,
+  } = useTablePagination();
 
+  const { search, setSearch } = useTableFilters();
 
+  // Reset page on search/filter change
   useEffect(() => {
-    fetchCustomers();
-  }, []);
+    onPageChange(null, 0);
+  }, [search]);
+
+  // Fetch data
+  useEffect(() => {
+    fetchTable({
+      page: page + 1,
+      limit: rowsPerPage,
+      search,
+    }).then(setTotalCount);
+  }, [page, rowsPerPage, search]);
 
   const columns = [
     { id: "id", label: "S.No" },
@@ -26,34 +50,34 @@ export default function ExistingCustomer() {
     { id: "createdAt", label: "Created At" },
   ];
 
-const tableData = customers.map((item, index) => ({
-  id: index + 1,
-  _id: item._id,
-  firstName: `${item.firstName} ${item.lastName}`,
-  img: item.img ? (
-    <Avatar 
-      src={item.img} 
-      alt="Customer"
-      sx={{ 
-        width: 50, 
-        height: 50,
-      }}
-    />
-  ) : (
-    <Avatar 
-      sx={{ 
-        width: 50, 
-        height: 50, 
-        bgcolor: 'grey.300'
-      }}
-    >
-      {/* Show initials or leave empty */}
-      {item.firstName?.charAt(0) || ''}
-    </Avatar>
-  ),
-  mobile: item.mobile,
-  createdAt: new Date(item.createdAt).toLocaleDateString(),
-}));
+  const tableData = customers.map((item, index) => ({
+   id: page * rowsPerPage + index + 1,
+    _id: item._id,
+    firstName: item.name,
+    img: item.image ? (
+      <Avatar
+        src={item.image}
+        alt="Customer"
+        sx={{
+          width: 50,
+          height: 50,
+        }}
+      />
+    ) : (
+      <Avatar
+        sx={{
+          width: 50,
+          height: 50,
+          bgcolor: "grey.300",
+        }}
+      >
+        {/* Show initials or leave empty */}
+        {item.firstName?.charAt(0) || ""}
+      </Avatar>
+    ),
+    mobile: item.mobile,
+    createdAt: new Date(item.createdAt).toLocaleDateString(),
+  }));
 
   return (
     <>
@@ -83,16 +107,28 @@ const tableData = customers.map((item, index) => ({
         </Box>
 
         <Box bgcolor="#fff" px={2} py={1} borderRadius={1}>
+          <FilterBar
+            rows={[
+              <Box display="flex" gap={1} flexWrap="wrap">
+                <FilterItem>
+                  <Search onSearch={(v) => setSearch(v)} loading={loading} />
+                </FilterItem>
+              </Box>
+              
+            ]}
+          />
           <SubTable
             coloums={columns}
             data={tableData}
             loading={loading}
+              page={page}
+            rowsPerPage={rowsPerPage}
+            count={totalCount}
+            onPageChange={onPageChange}
+            onRowsPerPageChange={onRowsPerPageChange}
             onEdit={(row: any) => navigate(`/customer/editcustomer/${row._id}`)}
-            
           />
         </Box>
-
-       
       </DashboardContent>
     </>
   );

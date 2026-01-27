@@ -1,4 +1,4 @@
-    import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Toast } from "../../components/toast/toast";
 import { paymentModeApi, paymentProviderApi } from "../../services/api.common";
 
@@ -6,6 +6,7 @@ import { paymentModeApi, paymentProviderApi } from "../../services/api.common";
 export type Option = {
   label: string;
   value: string;
+  data: any;
 };
 
 export function usePaymentMethod() {
@@ -25,6 +26,7 @@ export function usePaymentMethod() {
         (res?.data || []).map((item: any) => ({
           label: item.mode,
           value: item._id,
+          data: { ...item },
         }))
       );
     } catch (error: any) {

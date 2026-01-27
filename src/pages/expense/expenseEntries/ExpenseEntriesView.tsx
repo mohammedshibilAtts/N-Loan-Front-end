@@ -3,13 +3,25 @@ import { spliceDecimals } from "../../../const";
 
 function ExpenseEntriesView({ data }: { data: any }) {
   const fields: any[] = [
-    {
-      name: "expenseDate",
-      label: "Expense Date",
-      value: data?.expenseDate
-        ? new Date(data?.expenseDate).toLocaleDateString("en-GB")
-        : "N/A",
-    },
+ {
+  name: "expenseDate",
+  label: "Expense Date",
+  value: data?.expenseDate
+    ? new Date(data.expenseDate).toLocaleDateString("en-GB")
+    : "N/A",
+},
+{
+  name: "expenseTime",
+  label: "Time",
+  value: data?.expenseDate
+    ? new Date(data.expenseDate).toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true, 
+      }).toUpperCase()
+    : "N/A",
+},
+
     {
       name: "branch",
       label: "Branch",

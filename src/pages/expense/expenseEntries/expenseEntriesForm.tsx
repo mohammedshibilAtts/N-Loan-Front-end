@@ -98,10 +98,20 @@ export const ExpenseEntriesForm: React.FC<Props> = ({
 
   /* ---------- FORM FIELDS ---------- */
   const fields: ValidationField[] = [
-    { name: "expenseDate", label: "Expense Date", type: "date", required: true },
+    {
+      name: "expenseDate",
+      label: "Expense Date",
+      type: "date",
+      required: true,
+    },
     { name: "branch", label: "Branch", type: "dropdown", required: true },
     { name: "expense", label: "Expense", type: "dropdown", required: true },
-    { name: "subExpense", label: "Sub Expense", type: "dropdown", required: true },
+    {
+      name: "subExpense",
+      label: "Sub Expense",
+      type: "dropdown",
+      required: true,
+    },
     {
       name: "paymentMethod",
       label: "Payment Method",
@@ -198,7 +208,7 @@ export const ExpenseEntriesForm: React.FC<Props> = ({
                       resolveOptions(field.name),
                       formik.values[field.name]
                     )}
-                    onChange={(_, v:any) => {
+                    onChange={(_, v: any) => {
                       formik.setFieldValue(field.name, v?.value || "");
                       if (field.name === "expense")
                         fetchSubExpenseByExpenseId(v?.value);
@@ -216,11 +226,21 @@ export const ExpenseEntriesForm: React.FC<Props> = ({
                 ) : field.type === "date" ? (
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
-                     sx={{width:1}}
+                      sx={{ width: 1 }}
                       value={formik.values.expenseDate}
-                      onChange={(v) =>
-                        formik.setFieldValue("expenseDate", v)
-                      }
+                      onChange={(v) => {
+                        if (!v) return;
+
+                        const now = dayjs();
+
+                        const merged = v
+                          .hour(now.hour())
+                          .minute(now.minute())
+                          .second(now.second())
+                          .millisecond(now.millisecond());
+
+                        formik.setFieldValue("expenseDate", merged);
+                      }}
                     />
                   </LocalizationProvider>
                 ) : (
@@ -252,7 +272,7 @@ export const ExpenseEntriesForm: React.FC<Props> = ({
           type="submit"
           variant="contained"
           disabled={loading || !formik.isValid}
-       onClick={() => formik.handleSubmit()}
+          onClick={() => formik.handleSubmit()}
         >
           {loading ? <CircularProgress size={22} /> : "Save"}
         </Button>
