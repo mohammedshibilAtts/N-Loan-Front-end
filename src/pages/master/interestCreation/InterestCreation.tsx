@@ -107,14 +107,17 @@ function InterestCreation() {
     },
     onSubmit: async (values, { resetForm }) => {
       try {
+        let res 
         if (isEdit && interestId) {
-          await updateInterest(interestId, values);
+          res = await updateInterest(interestId, values);
         } else {
-          await createInterest(values);
+          res = await createInterest(values);
         }
-        resetForm();
+        if(res){
+          resetForm();
         setIsEdit(false);
         setInterestId(null);
+        }
       } catch {}
     },
   });

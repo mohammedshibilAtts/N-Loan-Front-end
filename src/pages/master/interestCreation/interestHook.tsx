@@ -19,15 +19,27 @@ export function useInterest() {
   };
 
   const createInterest = async (data: any) => {
-    await interestApi.create(data);
-    Toast.show({ message: "Interest created", type: "success" });
-    fetchInterests();
+    try {
+      await interestApi.create(data);
+      Toast.show({ message: "Interest created", type: "success" });
+      fetchInterests();
+      return true
+    } catch (error: any) {
+      Toast.show({ message: error.message, type: "error" });
+      return false
+    }
   };
 
   const updateInterest = async (id: string, data: any) => {
-    await interestApi.update(id, data);
-    Toast.show({ message: "Interest updated", type: "success" });
-    fetchInterests();
+    try {
+      await interestApi.update(id, data);
+      Toast.show({ message: "Interest updated", type: "success" });
+      fetchInterests();
+      return true
+    } catch (error: any) {
+      Toast.show({ message: error.message, type: "error" });
+      return false
+    }
   };
 
   const deleteInterest = async (id: string) => {

@@ -7,6 +7,7 @@ export function useItem() {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [tableParams,SetTableParams]=useState()
 
   const fetchItems = async (query?: any) => {
     try {
@@ -26,19 +27,19 @@ export function useItem() {
   const createItem = async (data: any) => {
     const res = await itemApi.create(data);
     Toast.show({ message: res.message, type: "success" });
-    fetchItems();
+    fetchTable(tableParams)
   };
 
   const updateItem = async (id: string, data: any) => {
     const res = await itemApi.update(id, data);
     Toast.show({ message: res.message, type: "success" });
-    fetchItems();
+    fetchTable(tableParams)
   };
 
   const deleteItem = async (id: string) => {
     const res = await itemApi.delete(id);
     Toast.show({ message: res.message, type: "success" });
-    fetchItems();
+    fetchTable(tableParams)
   };
 
   const fetchItemById = async (id: string) => {
@@ -74,6 +75,7 @@ export function useItem() {
 
   const fetchTable = async (params?: any) => {
     try {
+      SetTableParams(params)
       setLoading(true);
       const res = await itemApi.table(params);
       setItems(res?.data?.data || []);

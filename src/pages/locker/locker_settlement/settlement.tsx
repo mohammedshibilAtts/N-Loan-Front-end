@@ -1,28 +1,64 @@
 import { Helmet } from "react-helmet-async";
-import { useState } from "react";
 import { CONFIG } from "../../../config-global";
-import API_ENDPOINTS from "../../../services/endpoints";
-import {
-  EXPENSE_ENTRIES_DELETE_RES,
-  EXPENSE_ENTRIES_TABLE,
-  EXPENSE_ENTRIES_EDIT_RES,
-} from "../../../store/actionTypes";
 import { DashboardContent } from "../../../layouts/dashboard";
-import { Box } from "@mui/material";
-import { useDispatch } from "react-redux";
-import { apiRequest } from "../../../store/actions";
-import { ConfirmationDialog } from "../../../layouts/components/confirmationDialog";
-
+import { Box, Button } from "@mui/material";
 import dayjs from "dayjs";
 import "dayjs/locale/en";
 import { SettlementProvider } from "./settlementProvider";
 import { Breadcrumb } from "../../../components/breadCrumbComp";
-import { DataTableRefactored } from "../../../components/datatable/DataTableRefactored";
 import SubTable from "../../../components/subTable/subTable";
+import { useLockerSettlement } from "./lockerSettlHooks";
+import { formatDateTime } from "../../../utils/dateFormate";
+import { useEffect, useState } from "react";
 
 dayjs.locale("en");
 
 export default function ExpenseEntriesTable() {
+
+        const [isFormOpen, setIsFormOpen] = useState(false);
+        const [lockerData,setLockerData]=useState({})
+
+  const { data, loading, table } = useLockerSettlement();
+
+  useEffect(() => {
+    table({});
+  }, []);
+
+  const columns = [
+    { id: "id", label: "S.No" },
+    { id: "lockerName", label: "Locker Name" },
+    { id: "amount", label: "Amount" },
+    { id: "lastPaidDate", label: "Last Paid Date" },
+    { id: "action", label: "Last Paid Date" },
+  ];
+
+  const handlePay=(row:any)=>{
+        setIsFormOpen(true);
+        setLockerData(row)
+  }
+
+  const tableData = data.map((item, index) => ({
+    id: index + 1,
+    _id: item?._id,
+    lockerName: item?.lockerName,
+    amount: item?.Amount,
+    lastPaidDate: formatDateTime(item?.lastPaidDate),
+    action: (<>
+    <Button onClick={()=>handlePay(item)} sx={{background:"black",color:"white"}}>
+        Pay
+    </Button>
+    </>),
+  }));
+
+      const handleFormSubmitSuccess = () => {
+        setIsFormOpen(false);
+      
+    };
+
+    const handleCloseForm = () => {
+        setIsFormOpen(false);
+       
+    };
   return (
     <>
       <Helmet>
@@ -36,21 +72,29 @@ export default function ExpenseEntriesTable() {
           />
         </Box>
 
-        {/* <Box bgcolor="#fff" px={2} py={1} borderRadius={1}>
+        <Box bgcolor="#fff" px={2} py={1} borderRadius={1}>
           <SubTable
             coloums={columns}
             data={tableData}
             loading={loading}
-            onEdit={handleEdit}
-            onView={handleView}
-            onDelete={handleDelete}
-            page={page}
-            rowsPerPage={rowsPerPage}
-            count={totalCount}
-            onPageChange={onPageChange}
-            onRowsPerPageChange={onRowsPerPageChange}
+            hidePagination={true}
+            // onEdit={handleEdit}
+            // onView={handleView}
+            // onDelete={handleDelete}
+            // page={page}
+            // rowsPerPage={rowsPerPage}
+            // count={totalCount}
+            // onPageChange={onPageChange}
+            // onRowsPerPageChange={onRowsPerPageChange}
           />
-        </Box> */}
+        </Box>
+
+        {isFormOpen && (
+          <SettlementProvider
+            onClose={handleCloseForm}
+            lockerData={lockerData}
+          />
+        )}
       </DashboardContent>
     </>
   );

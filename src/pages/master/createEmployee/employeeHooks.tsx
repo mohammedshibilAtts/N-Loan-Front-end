@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { employeeApi } from "./api.employee";
 import { Toast } from "../../../components/toast/toast";
+import { useNavigate } from "react-router-dom";
 
 export function useEmployee() {
   /* ---------- STATE ---------- */
   const [employees, setEmployees] = useState<any[]>([]);
 const [employeeData, setEmployeeData] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const navigate = useNavigate()
 
   /* ---------- FETCH ALL ---------- */
   const fetchEmployees = async () => {
@@ -44,6 +47,7 @@ const [employeeData, setEmployeeData] = useState<any | null>(null);
         type: "success",
       });
       fetchEmployees();
+      navigate('/masters/viewemployee')
       return true;
     } catch (err: any) {
       Toast.show({ message: err.message, type: "error" });

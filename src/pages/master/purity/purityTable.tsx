@@ -55,7 +55,7 @@ export default function PurityTable() {
       search,
       filters,
     }).then(setTotalCount);
-  }, [page, rowsPerPage, search, filters]);
+  }, [page, rowsPerPage, search, filters,isFormOpen]);
 
   /* ------------------ EDIT ------------------ */
   // const handleEdit = (row: any) => {
