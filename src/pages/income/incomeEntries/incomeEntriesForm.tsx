@@ -141,6 +141,20 @@ export const IncomeEntriesForm: React.FC<Props> = ({
     },
     enableReinitialize: true,
     validationSchema: useValidation(fields),
+    validate: (values) => {
+      const errors: any = {};
+      const selectedMode = paymentModes.find(
+        (p: any) => p.value === values.paymentMethod
+      );
+
+      // If payment mode is selected and NOT Cash (paymentNo: 1), Provider is required
+      if (selectedMode && selectedMode.data?.paymentNo !== 1) {
+        if (!values.paymentProvider) {
+          errors.paymentProvider = "Payment Provider is required";
+        }
+      }
+      return errors;
+    },
 
     onSubmit: async (values) => {
       const payload = {
@@ -197,73 +211,110 @@ export const IncomeEntriesForm: React.FC<Props> = ({
       <DialogContent>
         <Box component="form" onSubmit={formik.handleSubmit}>
           <Grid container spacing={2}>
-            {fields.map((field) => (
-              <Grid item xs={12} md={6} key={field.name}>
-                <InputLabel>{field.label}</InputLabel>
+            {fields.map((field) => {
+              if (field.name === "paymentProvider") {
+                const selectedMethod = getOption(
+                  paymentModes,
+                  formik.values.paymentMethod
+                );
+                if (selectedMethod?.label?.toLowerCase() === "cash") {
+                  return null;
+                }
+              }
 
-                {field.type === "dropdown" ? (
-                  <Autocomplete
-                    options={resolveOptions(field.name)}
-                    getOptionLabel={(o) => o.label}
-                    isOptionEqualToValue={(a, b) => a.value === b.value}
-                    value={getOption(
-                      resolveOptions(field.name),
-                      formik.values[field.name]
-                    )}
-                    onChange={(_, v: any) => {
-                      formik.setFieldValue(field.name, v?.value || "");
-                      if (field.name === "income")
-                        fetchSubIncomeByIncomeId(v?.value);
-                      if (field.name === "paymentMethod")
-                        fetchPaymentProviders(v?.value);
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        error={Boolean(formik.errors[field.name])}
-                        helperText={formik.errors[field.name] as string}
+              return (
+                <Grid item xs={12} md={6} key={field.name}>
+                  <InputLabel>{field.label}</InputLabel>
+
+                  {field.type === "dropdown" ? (
+                    <Autocomplete
+                      options={resolveOptions(field.name)}
+                      getOptionLabel={(o) => o.label}
+                      isOptionEqualToValue={(a, b) => a.value === b.value}
+                      value={getOption(
+                        resolveOptions(field.name),
+                        formik.values[field.name]
+                      )}
+                      onBlur={() => formik.setFieldTouched(field.name, true)}
+                      onChange={(_, v: any) => {
+                        formik.setFieldValue(field.name, v?.value || "");
+                        if (field.name === "income")
+                          fetchSubIncomeByIncomeId(v?.value);
+                        if (field.name === "paymentMethod") {
+                          fetchPaymentProviders(v?.value);
+                          formik.setFieldValue("paymentProvider", "");
+                        }
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          error={Boolean(
+                            formik.touched[field.name] &&
+                            formik.errors[field.name]
+                          )}
+                          helperText={
+                            (formik.touched[field.name] &&
+                              formik.errors[field.name]) as string
+                          }
+                        />
+                      )}
+                    />
+                  ) : field.type === "date" ? (
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DatePicker
+                        sx={{ width: 1 }}
+                        value={formik.values.incomeDate}
+                        onChange={(v) => {
+                          if (!v) return;
+
+                          const now = dayjs();
+
+                          const merged = v
+                            .hour(now.hour())
+                            .minute(now.minute())
+                            .second(now.second())
+                            .millisecond(now.millisecond());
+
+                          formik.setFieldValue("incomeDate", merged);
+                        }}
+                        slotProps={{
+                          textField: {
+                            onBlur: () =>
+                              formik.setFieldTouched("incomeDate", true),
+                            error: Boolean(
+                              formik.touched.incomeDate &&
+                              formik.errors.incomeDate
+                            ),
+                            helperText: (formik.touched.incomeDate &&
+                              formik.errors.incomeDate) as string,
+                          },
+                        }}
                       />
-                    )}
-                  />
-                ) : field.type === "date" ? (
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      sx={{ width: 1 }}
-                      value={formik.values.incomeDate}
-                      onChange={(v) => {
-                        if (!v) return;
-
-                        const now = dayjs();
-
-                        const merged = v
-                          .hour(now.hour())
-                          .minute(now.minute())
-                          .second(now.second())
-                          .millisecond(now.millisecond());
-
-                        formik.setFieldValue("incomeDate", merged);
+                    </LocalizationProvider>
+                  ) : (
+                    <TextField
+                      fullWidth
+                      type={field.type}
+                      {...formik.getFieldProps(field.name)}
+                      error={Boolean(
+                        formik.touched[field.name] && formik.errors[field.name]
+                      )}
+                      helperText={
+                        formik.touched[field.name] && formik.errors[field.name]
+                      }
+                      InputProps={{
+                        startAdornment:
+                          field.name === "amount" ? (
+                            <InputAdornment position="start">
+                              <IndianRupee size={18} />
+                            </InputAdornment>
+                          ) : undefined,
                       }}
                     />
-                  </LocalizationProvider>
-                ) : (
-                  <TextField
-                    fullWidth
-                    type={field.type}
-                    {...formik.getFieldProps(field.name)}
-                    error={Boolean(formik.errors[field.name])}
-                    helperText={formik.errors[field.name]}
-                    InputProps={{
-                      startAdornment:
-                        field.name === "amount" ? (
-                          <InputAdornment position="start">
-                            <IndianRupee size={18} />
-                          </InputAdornment>
-                        ) : undefined,
-                    }}
-                  />
-                )}
-              </Grid>
-            ))}
+                  )}
+                </Grid>
+              );
+            })}
           </Grid>
         </Box>
       </DialogContent>
@@ -273,7 +324,7 @@ export const IncomeEntriesForm: React.FC<Props> = ({
         <Button
           type="submit"
           variant="contained"
-          disabled={loading || !formik.isValid}
+          disabled={loading}
           onClick={() => formik.handleSubmit()}
         >
           {loading ? <CircularProgress size={22} /> : "Save"}
